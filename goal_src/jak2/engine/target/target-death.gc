@@ -4,6 +4,9 @@
 ;; name: target-death.gc
 ;; name in dgo: target-death
 ;; dgos: ENGINE, GAME
+
+(define-extern target-explode symbol)
+(define-extern target-explode-start symbol)
 (define-extern start-sig-recorder (function none))
 (define-extern intro-play (function none))
 (define-extern find-nearest-entity (function vector type entity))
@@ -921,6 +924,9 @@
 (defstate target-hit (target)
   :event target-standard-event-handler
   :exit (behavior ()
+  (when (and (rand-vu-percent? 0.166)(= target-explode #t))
+            (set! target-explode-start #t)
+          )
     (let ((v1-0 (new-stack-vector0))
           (f0-1 (vector-dot (-> self control dynam gravity-normal) (-> self control transv)))
           )

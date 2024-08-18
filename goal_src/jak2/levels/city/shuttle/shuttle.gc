@@ -1387,6 +1387,7 @@
     (none)
     )
   )
+(when (= hell-mode-option #f)
 
 (define *city-shuttle-info* (new 'static 'boxed-array :type city-shuttle-info
                               (new 'static 'city-shuttle-info
@@ -1439,7 +1440,61 @@
                                 )
                               )
         )
+)
 
+        (when (= hell-mode-option #t)
+          (define *city-shuttle-info* (new 'static 'boxed-array :type city-shuttle-info
+                              (new 'static 'city-shuttle-info
+                                :pos (new 'static 'vector :x 4288512.0 :y 37969.92 :z 237568.0 :w 1.0)
+                                :level 'ctysluma
+                                :nav-mesh-id #x2578
+                                :time (seconds 30)
+                                )
+                              (new 'static 'city-shuttle-info
+                                :pos (new 'static 'vector :x 4419584.0 :y 33341.44 :z 1449984.0 :w 1.0)
+                                :level 'ctysluma
+                                :nav-mesh-id #x2578
+                                :time (seconds 45)
+                                )
+                              (new 'static 'city-shuttle-info
+                                :pos (new 'static 'vector :x 3519856.8 :y 33341.44 :z 1196646.4 :w 1.0)
+                                :level 'ctysluma
+                                :nav-mesh-id #x2578
+                                :time (seconds 30)
+                                )
+                              (new 'static 'city-shuttle-info
+                                :pos (new 'static 'vector :x 2766438.5 :y 32727.04 :z -1390428.1 :w 1.0)
+                                :level 'ctyslumb
+                                :nav-mesh-id #x2644
+                                :time (seconds 30)
+                                )
+                              (new 'static 'city-shuttle-info
+                                :pos (new 'static 'vector :x 1641594.9 :y 32727.04 :z -1032192.0 :w 1.0)
+                                :level 'ctyslumb
+                                :nav-mesh-id #x2644
+                                :time (seconds 45)
+                                )
+                              (new 'static 'city-shuttle-info
+                                :pos (new 'static 'vector :x 1734901.8 :y 32563.2 :z -239656.95 :w 1.0)
+                                :level 'ctyslumb
+                                :nav-mesh-id #x2644
+                                :time (seconds 30)
+                                )
+                              (new 'static 'city-shuttle-info
+                                :pos (new 'static 'vector :x 2341396.5 :y 32727.04 :z -63037.44 :w 1.0)
+                                :level 'ctyslumb
+                                :nav-mesh-id #x2644
+                                :time (seconds 25)
+                                )
+                              (new 'static 'city-shuttle-info
+                                :pos (new 'static 'vector :x 2429870.0 :y 32563.2 :z -2287288.2 :w 1.0)
+                                :level 'ctyslumc
+                                :nav-mesh-id #x2644
+                                :time (seconds 40)
+                                )
+                              )
+        )
+        )
 (set-subtask-hook!
   *game-info*
   (game-task-node city-shuttle-shuttle)
@@ -1558,6 +1613,7 @@
     (none)
     )
   )
+
 
 (define *city-burning-bush-shuttle-1-info*
   (new 'static 'boxed-array :type city-shuttle-info

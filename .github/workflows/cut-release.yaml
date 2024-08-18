@@ -22,12 +22,12 @@ jobs:
     uses: open-goal/mod-bundling-tools/.github/workflows/mod-bundler.yml@v1
     with:
       semverBump: ${{ inputs.bump }}
-      metadataName: "Test Mod Bundle"
-      metadataDescription: "This is a test mod bundle. 2"
-      metadataSupportedGames: "jak1"
-      metadataAuthors: "barg,vaser"
-      metadataTags: "rng,gameplay-mod"
-      metadataWebsiteUrl: "https://www.example.com/this/is/optional"
+      metadataName: "HeroMode+ | A Jak II Overhaul"
+      metadataDescription: "Overhauls Jak II's difficulty, but with a twist! Adds weapon mods, custom modifiers, hero mode changes, and various other things to find! Are you up for the challenge?"
+      metadataSupportedGames: "jak2"
+      metadataAuthors: "Kraken"
+      metadataTags: "challenge,gameplay-mod"
+      metadataWebsiteUrl: "https://github.com/RealOfficialKraken/updated-HeroModePlus"
       skipMacOS: true
       skipLinux: true
       toolingBinaryDir: "out/build/Release/bin"

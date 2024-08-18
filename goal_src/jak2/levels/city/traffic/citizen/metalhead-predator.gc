@@ -1144,8 +1144,45 @@
   (set! (-> this dest-fade) 0.0)
   (set! (-> this curr-node) -1)
   (set! (-> this next-change) 0)
-  (set! (-> this miss-amount) 16384.0)
+  (set! (-> this miss-amount) 16.0)
   (set-vector! (-> this draw color-mult) 1.0 1.0 1.0 1.0)
   0
   (none)
+  )
+
+
+(defbehavior metalhead-predator-init-by-other metalhead-predator ((this metalhead-predator) (vec vector))
+    (initialize-skeleton
+        this
+        (the-as skeleton-group (art-group-get-by-name *level* "skel-metalhead-predator" (the-as (pointer uint32) #f)))
+        (the-as pair 0)
+    )
+    (init-enemy-behaviour-and-stats! this *metalhead-predator-nav-enemy-info*)
+    (let ((v1-5 (-> this nav)))
+      (set! (-> v1-5 speed-scale) 1.0)
+    )
+    0
+    (set! (-> this draw lod-set lod 0 dist) 491520.0)
+    (set! (-> this draw lod-set lod 1 dist) 573440.0)
+    (set! (-> this anim-shuffle) 6)
+    (set! (-> this anim-walk) 6)
+    (set! (-> this speed-walk) 12288.0)
+    (set! (-> this dist-walk-anim) 16179.2)
+    (set! (-> this dist-run-anim) 26214.4)
+    (set! (-> this anim-run) 7)
+    (set! (-> this speed-run) 49152.0)
+    (set! (-> this water-anim) -1)
+    (add-connection *part-engine* this 8 this 318 (new 'static 'vector :x 1228.8 :y 450.56 :z 983.04 :w 614400.0))
+    (add-connection
+      *part-engine*
+      this
+      8
+      this
+      318
+      (new 'static 'vector :x -1228.8 :y 450.56 :z 983.04 :w 614400.0)
+    )
+    (new-source! (-> this los) this (seconds 0.2) (collide-spec backgnd obstacle))
+    (set! (-> this minimap) #f)
+    0
+    (none)
   )

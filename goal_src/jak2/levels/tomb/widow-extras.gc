@@ -1503,7 +1503,7 @@ This commonly includes things such as:
            (+! (-> self segs-shot) 1)
            (damage-pillar)
            (cond
-             ((>= (-> self segs-shot) 16)
+             ((>= (-> self segs-shot) 0)
               (go-virtual break-it)
               )
              ((time-elapsed? (-> self last-pillar-hit) (seconds 2))
@@ -1823,6 +1823,9 @@ This commonly includes things such as:
   (set-as-offset-from! (the-as hud-sprite (-> this sprites)) (the-as vector4w (-> this sprites 1)) -32 0)
   (set-as-offset-from! (-> this sprites 5) (the-as vector4w (-> this sprites 1)) -62 14)
   (set-as-offset-from! (-> this sprites 6) (the-as vector4w (-> this sprites 1)) -32 14)
+  (when (and (> (-> *target* fact health) 1.0)(= peacemaker-ability #t))
+      (set! (-> *target* fact health) 1.0)
+    )
   (let ((s5-0 (-> this values 0 current))
         (f30-0 (* 0.01 (the float (-> this values 1 current))))
         )

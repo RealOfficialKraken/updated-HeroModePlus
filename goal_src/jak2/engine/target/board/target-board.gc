@@ -5,6 +5,8 @@
 ;; name in dgo: target-board
 ;; dgos: ENGINE, GAME
 
+(define-extern hover-damage symbol)
+
 (define-extern *board-walk-mods* surface)
 (define-extern *board-duck-mods* surface)
 (define-extern *board-air-mods* surface)
@@ -108,6 +110,7 @@
     (set-width! font-ctx 332)
     (set-scale! font-ctx 0.35)
     (print-game-text *temp-string* font-ctx #f 44 (bucket-id debug-no-zbuf1))
+    
     ;; Add points
     (+! (-> font-ctx origin y) 36.0)
     (set-scale! font-ctx 0.5)
@@ -808,6 +811,12 @@
   (logior! (-> self state-flags) (state-flags lleg-no-ik rleg-no-ik))
   (set! (-> self board thrust-scale) 1.0)
   (set! (-> self board turn-anim-targ) 0.0)
+  (when (= hover-damage #t)
+    (set! (-> self board thrust-scale) 2.2)
+  )
+  (when (= hover-damage #f)
+    (set! (-> self board thrust-scale) 1.0)
+  )
   (set! (-> self board turn-anim-frame) 0.0)
   (set! (-> self board turn-anim-vel) 0.0)
   (set! (-> self board turn-anim-duck) 0.0)
@@ -2916,6 +2925,7 @@
   (none)
   )
 
+(define-extern *target-board-hold-tricks* int)
 (defmethod flush-trick-list ((this board-info))
   "Flush trick list and give out points."
   (let ((f30-0 0.0))

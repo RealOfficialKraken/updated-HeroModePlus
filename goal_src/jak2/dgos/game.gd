@@ -343,7 +343,7 @@
   "pckernel.o" ;; added
   "subtitle2-h.o" ;; added
   "subtitle2.o" ;; added
-  "input-display.o" ;;added ;;mod-base-change
+  "input-display.o" ;;added
   "main.o"
   "collide-cache.o"
   "collide-debug.o"
@@ -465,10 +465,44 @@
   "battle.o"
   "elec-gate.o"
   "cty-guard-turret-button.o"
+  "nav-graph-h.o"
+  "traffic-engine-h.o"
+  "vehicle-h.o"
+  "citizen-h.o"
+  "citizen.o"
+  "civilian.o"
+  "guard.o"
+  "citizen-norm.o"
+  "citizen-fat.o"
+  "citizen-chick.o"
+  "citizen-enemy.o"
   "entity-debug.o" ;; added
   "mod-settings.o" ;; added ;;mod-base-change
   "mod-common-functions.o" ;; added
   "orb-placer.o"  ;; added
   "mod-custom-code.o" ;; added
-  "mod-debug.o" ;; added
+  "mod-debug.o"
+  "crimson-guard-level.o";;;;;;;;;;;;;;;;; added for guard-grenade and all the way down.
+  "guard-conversation.o"
+  "hover-nav-control-h.o" ;added
+  "gstate.o"
+  "dig-digger.o"
+  "dig-obs.o"
+  "dig1-obs.o"
+  "dig2-obs.o"
+  "dig3-obs.o"
+  "grenadier.o"
+  "dig-texture.o"
+  "dig-scenes.o"
+  "dig-part.o"
+  "tpage-2282.go"
+  "tpage-2284.go"
+  "tpage-2283.go"
+  "tpage-2419.go"
+  "tpage-2844.go"
+  "dig-digger-ag.go"
+  "crimson-guard-ag.go"
+  "dig-bomb-crate-ag.go"
+  "dig-bomb-crate-cylinder-ag.go"
+  "dig1-vis.go"
  ))

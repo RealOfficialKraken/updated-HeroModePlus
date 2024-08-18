@@ -379,6 +379,10 @@
 
 (defmethod do-pickup ((this collectable) (arg0 handle))
   (set! (-> this pickup-handle) arg0)
+  (when (= stored-cp? #f)
+  (set! pickup-save #t)
+  (set! pickup-frame 0)
+  )
   (logclear! (-> this mask) (process-mask actor-pause))
   (let ((v1-3 (-> this root root-prim)))
     (set! (-> v1-3 prim-core collide-as) (collide-spec))

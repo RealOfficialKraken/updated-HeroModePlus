@@ -9,6 +9,710 @@
 (declare-type continue-point basic)
 (declare-type game-save basic)
 
+(define matt-str (new 'global 'string 2048 (the-as string #f)))
+(define *pc-encoded-matt-str* (new 'global 'string 2048 (the-as string #f)))
+
+;(print help) in repl to see this
+(define help "
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+What are the commands to set your Green Eco or Gun Mod?
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ALL WEAPON MODS ARE TOGGLED OFF BY DEFAULT, ONCE YOU SET IT ON AND SAVE, THERES NO GOING BACK ON YOUR SAVE.
+you can set weapon mods to be on via (set! weapon-mod-toggle #t) 
+(this will choose a random modifier for you)
+R3 to open the HeroMode+ menu
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+WEAPON MODS: Each weapon mod will come with the option boolean, and an integer (which is referred in example as V) storing from 1-4 defining the selected gun. 1=Yellow, 2=Red, 3=Blue, 4=Dark
+All of these changes are done in target-gun.gc
+Example:
+(set! rapid-fire-option #t)
+(set! rapid-fire-int V)
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+rapid-fire-option                 Fire rate increased dramatically
+rapid-fire-int
+double-tap-option                 Every shot has a chance to fire a second without consuming ammo
+double-tap-int
+infinite-range-option             Every shot follows newtons law              (not working)
+infinite-range-int                (meaning every shot has a max range of 999)
+big-shot-option                   bigger bullets, bigger hitbox, right?       (not working)
+big-shot-int
+mag-bag-option                    x3 the ammo on the weapon its attached to (not implemented yet)
+mag-bad-int
+pm-extra-shot-option              Every shot has a chance to fire a peacemaker shot :) (this can also be pulled as a legendary)
+pm-extra-shot-int
+predator-shot-option              Every shot has a good chance to spawn a predator shot with it
+predator-shot-int                 (this is deprecated, pred shot is in random-shot only, still works for the most part)
+guard-shot-option                 Every shot has a good chance to spawn a guard shot with it
+guard-shot-int
+leg-random-shot                   Your gun can fire every shot known to man.
+leg-random-int
+Every guard that spawns will have a chance to drop a legendary weapon mod. All others are done via missions or burning-bush.
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+GREEN ECO MODS(modifiers): Each mod works differently, but I keep all of it on a toggle boolean.
+Example: (set! peacemaker-ability #t)
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+peacemaker-ability                at any given points in the game, jak has a chance to fire 100 peacemaker shots out of his gun
+                                  but you must one-hit every boss fight in the game.
+tp-fb                             upon death, theres a good chance jak will respawn at the final boss fight,
+                                  BUT the final boss is extremely unfair, no saving is allowed, and no checkpoints are stored.
+hover-damage                      Your hoverboard goes much faster, tricks virtually mean nothing for speed
+                                  but mostly all enemies (except guards in traffic) have X5 HP. (oof)
+dark-traffic                      Every dark eco you collect has a chance to fill your darkjak meter 100%
+                                  but any time jak angers the guards, its max alert level
+trip-metalheads                   jumping, punching, spinning, rolling, or shooting can make jak trip at a low chance
+                                  but every time this happens, you get 10 free metal-head gems (cooldown 2000 frames)
+target-explode                    jak has a bomb strapped to his chest and if he takes damage he has a chance of exploding
+                                  but dark jak lasts a lot longer
+hell-mode-option                  enabled automatically when in hero-mode. This enables all modifiers }:) good luck
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+"
+)
+
+
+
+#|
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+YOU CAN READ THIS PART YOU WANT, YOU DONT HAVE TO :) These are ideas of mine to keep track of. Note that some are dated and this is more of a refernece for me..
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+Upon loading for the first time in fortress, you will be given the option to choose one or to choose none.
+then upon choosing, it saves a value attached to the option, a 1 or 0, to the save file directly
+then an updating code block will check for a 1 or 0 and will actively set the corresponding mod a #t or symbol
+It is required to choose one to gain access to the weapon mods menu. (IE if all 0, then the setting for gun mods in the secrets menu does not appear)
+
+(define-extern traffic-nuke-option symbol) ;;this is define-extern for if its over all chosen
+(define-extern traffic-nuke-save 0) ;;this is define-extern to set the gun for the option
+
+jak does has a chance to cause 50 peacemaker shots to ring out in all directions.
+But bosses must be one hit.
+
+(define-extern trip-metalheads-option symbol)
+(define-extern trip-metalheads-save 0)
+Any input has a very small chance for Jak to get hurt with 0 damage,
+but every time that happens you gain 50 metal head gems
+
+(define-extern input-teleport-option symbol)
+(define-extern input-teleport-save 0)
+each time jak dies, it has a small chance to respawn jak to the final boss checkpoint.
+but the final boss fight is extremely unfair.
+the checkpoint is not stored or saved, nor is the save accessible during bossfight.
+essentially you tp to boss, have a fun time in hell, die, then come back to your original checkpoint.
+
+(define-extern ambush-tricks-option symbol)
+(define-extern ambush-tricks-save 0)
+any input rolls between 1-600. If it's 1, ambush jak.
+you get the damage buff at this very moment
+ambush: 6 cloaked metalheads spawn in a radius around jak. (it can be a static position honestly, makes it more hilarious)
+
+(define-extern hell-mode-option symbol)
+(define-extern hell-mode-save 0)
+once a hero mode save is made, all options listed above are active at once in that save,
+but you get legendary gun mods :) 
+
+
+
+
+
+GUNMOD Shark (legendary)
+Chance not to consume ammo
+
+GUNMOD Mehrunes (legendary)
+1/25 chance to instant kill
+
+GUNMOD Random (legendary)
+High chance to fire a random projectile alongside your gun
+
+GUNMOD Explode (legendary)
+All shots explode
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+CURRENT BUGS:
+- GE PEACEMAKER_ABILITY: peacemaker weapon has to be available for peacemaker-ability to not crash the game upon trigger, so player starts with all weapons.
+- GM PRED/GUARD SHOT: firing the guard or predator shot sets jak invulnerable for 3 frames until I can figure a way to not damage jak when firing
+- GM PRED/GUARD SHOT: making jak invulnerable in this state turns off all the other game-secrets
+- GM PREDATOR SHOT: firing the predator shot outside of ctywide and ctyport crashes the game
+- GM BOARD PICKUP: the random gunmod trigger will happen upon drop, not upon pickup, but not for things like giving gems, that will be upon pickup >:[
+  |#
+
+
+#|;;;;;;;;;;;;;;;;;;;;;;;;;;
+;      Var Definitions     ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;|#
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#|
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+YOU CAN READ THIS PART YOU WANT, YOU DONT HAVE TO :) These are ideas of mine to keep track of. Note that some are dated and this is more of a refernece for me..
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+Upon loading for the first time in fortress, you will be given the option to choose one or to choose none.
+then upon choosing, it saves a value attached to the option, a 1 or 0, to the save file directly
+then an updating code block will check for a 1 or 0 and will actively set the corresponding mod a #t or #f
+It is required to choose one to gain access to the weapon mods menu. (IE if all 0, then the setting for gun mods in the secrets menu does not appear)
+
+(define traffic-nuke-option #f) ;;this is defined for if its over all chosen
+(define traffic-nuke-save 0) ;;this is defined to set the gun for the option
+
+jak does has a chance to cause 50 peacemaker shots to ring out in all directions.
+But bosses must be one hit.
+
+(define trip-metalheads-option #f)
+(define trip-metalheads-save 0)
+Any input has a very small chance for Jak to get hurt with 0 damage,
+but every time that happens you gain 50 metal head gems
+
+(define input-teleport-option #f)
+(define input-teleport-save 0)
+each time jak dies, it has a small chance to respawn jak to the final boss checkpoint.
+but the final boss fight is extremely unfair.
+the checkpoint is not stored or saved, nor is the save accessible during bossfight.
+essentially you tp to boss, have a fun time in hell, die, then come back to your original checkpoint.
+
+(define ambush-tricks-option #f)
+(define ambush-tricks-save 0)
+any input rolls between 1-600. If it's 1, ambush jak.
+you get the damage buff at this very moment
+ambush: 6 cloaked metalheads spawn in a radius around jak. (it can be a static position honestly, makes it more hilarious)
+
+(define hell-mode-option #f)
+(define hell-mode-save 0)
+once a hero mode save is made, all options listed above are active at once in that save,
+but you get legendary gun mods :) 
+
+
+
+
+
+GUNMOD Shark (legendary)
+Chance not to consume ammo
+
+GUNMOD Mehrunes (legendary)
+1/25 chance to instant kill
+
+GUNMOD Random (legendary)
+High chance to fire a random projectile alongside your gun
+
+GUNMOD Explode (legendary)
+All shots explode
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+CURRENT BUGS:
+- GE PEACEMAKER_ABILITY: peacemaker weapon has to be available for peacemaker-ability to not crash the game upon trigger, so player starts with all weapons.
+- GM PRED/GUARD SHOT: firing the guard or predator shot sets jak invulnerable for 3 frames until I can figure a way to not damage jak when firing
+- GM PRED/GUARD SHOT: making jak invulnerable in this state turns off all the other game-secrets
+- GM PREDATOR SHOT: firing the predator shot outside of ctywide and ctyport crashes the game
+- GM BOARD PICKUP: the random gunmod trigger will happen upon drop, not upon pickup, but not for things like giving gems, that will be upon pickup >:[
+  |#
+
+
+#|;;;;;;;;;;;;;;;;;;;;;;;;;;
+;      Var Definitions     ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;|#
+
+;Modifier Definitions (gun-mod definitions in target-gun.gc)
+(define tp-fb-win #f)
+(define mod-reroll #f) ;toggle on to reroll your current mod for 10 metalhead gems
+(define mod-rand 0)
+(define mod-pick #f)
+
+(define auto-save-delayed? #f)
+(define auto-save-frame 0)
+
+(define hell-mode-option #f) ;toggle on to set hell-mode on (just turn on hero-mode)
+
+(define weapon-mod-toggle #f) ;The option thats asked at the beginning, toggling this on will choose a random modifier for jak.
+(define wm-drop #f) ;Turns on weapon mods dropping off the next spawned enemy that can drop mods.
+(define wm-leg #f) ;sees if a legendary has dropped, if toggled on, the game will never drop a legendary
+(define wm-roll-rand #f)
+(define wm-roll-numb 0)
+(define wm-rand-shot #f) ;toggle on to enable random shot, a legendary gun mod
+(define wm-roll-shot 0)
+(define inv-frames? #f)
+
+
+
+(define test-option #f) ;test projectile
+(define mod-all-yellow #f) ;sets all gunmods to yellow gun
+(define mod-all-blue #f) ;sets all gunmods to blue gun
+(define mod-all-red #f) ;sets all gunmods to red gun
+(define mod-all-dark #f) ;sets all gunmods to peacemaker
+(define mod-all-off #t)
+(define-extern mod-turning-off symbol)
+
+(define peacemaker-ability #f)  ; Chance to encumber in peacemaker shots, bosses are 1 hit
+(define pm-shot-counter 0)
+(define-extern gun-dark-present? symbol)
+(define pm-offset-y (new 'static 'vector :x (meters 0) :y (meters 2) :z (meters 0) :w 1.0))
+
+(define tp-fb #f) ; toggle on for a chance to teleport for final boss upon death
+(define start-tp #f)
+(define new-game-s? #f)
+(define frame-count 0)
+(define start-frame-count #f)
+(define going-back-tp #f)
+(define stored-cp? #f)
+(define pause-menu-blocked? #f)
+(define-extern tp-fb-win symbol)
+(define load-state-tp 0)
+(define start-death-timer-i #f)
+(define death-timer-i 0)
+(define death-timer-cdr #f)
+(define death-timer-cdi 0)
+(define rapid-fire-blue-frame 0)
+(define already-died? #f)
+(define jakisntdead #t)
+
+(define tp-fb-2 #f)
+(define tp-framec 0)
+(define start-tp-framec #f)
+
+(define hover-damage #f) ;toggle on to enable hoverboard mechanics, but enemies have X5 HP
+
+(define dark-traffic #f) ;toggle on for a chance to get darkjak meter to full off any dark eco, but traffic-alert-4 is set for any illegal activity
+
+(define trip-metalheads #f) ;toggle on for a chance to trip, but jak will get 10 metalhead gems every time (on cooldown 4000 frames)
+(define trip-start #f)
+(define trip-cooldown 0)
+(define bomb-setoffp3 "data/goal_src/jak2/pc/snd/bomb-setoff3.mp3")
+(define bomb-setoffp2 "data/goal_src/jak2/pc/snd/bomb-setoff2.mp3")
+(define bomb-setoffp "data/goal_src/jak2/pc/snd/bomb-setoff.mp3")
+(define bomb-explodep "data/goal_src/jak2/pc/snd/ww2-explode.mp3")
+(define target-explode #f) ;toggle on for jak to explode upon taking damage, but dark-jak lasts much longer.
+(define target-explode-start #f)
+(define explode-frames 0)
+(define explode-frame-start #f)
+(define explode-fstart #f)
+(define explode-f 0)
+(define r-bomb-setoff 0)
+(define dark-jacked? #f)
+(define dark-jacked! #f)
+(define rand-setting? #f)
+(define rand-setting-c 0)
+(define targetec-start #f)
+(define targetec-count 0)
+(define spawntheturrets #f)
+
+(define gungame-ammorefill #f)
+
+(define dt-frame-start #f)
+(define dt-count 0)
+(define dt-control #f)
+
+(define leg-got? #f)
+(define-extern leg-random-int int)
+(define leg-random-shot #f)
+(define leg-dont-fire? #f)
+
+(define mod-default-gun 1)
+
+(define all-modifiers-off? #f)
+(define mission-grab-1 #f) ;sets mission get for weapon mods
+(define mission-grab-2 #f) ;sets mission get for weapon mods
+(define mission-grab-3 #f) ;sets mission get for weapon mods
+(define mission-grab-4 #f) ;sets mission get for weapon mods
+(define orb-grab-1 #f) ;sets weapon mod after certain # of orbs
+(define orb-grab-2 #f)
+(define orb-grab-3 #f)
+
+(define settingunlocked1 #f)
+(define settingunlocked2 #f)
+(define settingunlocked3 #f)
+
+(define hint-done? #f)
+(define pregranger1 #f)
+(define preranger1i 0)
+(define granger1 #f)
+(define granger1i 0)
+(define granger2 #f)
+(define granger2i 0)
+(define granger3 #f)
+(define granger3i 0)
+(define granger4 #f)
+(define granger4i 0)
+(define in-granger? #f)
+(define ohshitactualfirst #f)
+(define ohshitfirsttime #f)
+(define firsttime 0)
+(define ohshit #f)
+(define ohshiti 0)
+(define tod-int 0.0)
+(define sp-win #f)
+(define sp-lose #f)
+(define sp-start #f)
+(define sp-again #f)
+(define sp-game #f)
+(define sp-int 0)
+
+(define granger-mode #f)
+(define granger-newgame #f)
+(define grangerd #f)
+(define-extern grangerd-string string)
+(define granger-ngi 0)
+(define granger-newgamei 0)
+(define granger-weapons #f)
+(define granger-ohshitalways #f)
+
+(define di-box #f)
+(define-extern di-s1 string)
+(define-extern di-s2 string)
+(define-extern di-s3 string)
+(define-extern di-s4 string)
+(define di-i 0)
+
+(define mushroom-movies #f)
+(define mushie-unlocked? #f)
+(define movie-int 0)
+(define mushroom-movies-start #f)
+(define mushroom-var 0)
+
+(define pickup-save #f)
+(define pickup-frame 0)
+
+;cty-guard-turret spawn params
+(define spawned-turret-hideout? #f)
+(define spawned-turrets-port? #f)
+(define spawned-turrets-pal? #f)
+(define spawned-turret-vin? #f)
+(define spawned-turret-market? #f)
+
+ (define-extern dark-traffic symbol)
+ (define orb-count1 60)
+ (define orb-count3 10)
+
+
+
+;BLACKJAK INFO:
+(define in-pre-game? #f)
+(define in-blackjack? #f)
+(define in-hiphog? #f)
+(define on-table? #f)
+(define table-activate #f)
+(define no-state-camera-table #f)
+(define bj-count 0)
+(define bj-start #f)
+(define hitting? #f)
+(define hitting2? #f)
+(define round-started? #f)
+(define draw-jak-current #f)
+
+(define draw-dealer-card1 #f)
+(define draw-dealer-card2 #f)
+(define draw-dealer-card3 #f)
+(define draw-dealer-card4 #f)
+(define draw-dealer-current #f)
+(define-extern current-dealer string)
+(define draw-current-dealer #f)
+
+;KICKING OUT IN BJ
+
+(define bj-kicked-out #f)
+(define bj-kicked-cdr 0)
+(define bj-kicked-max 5000)
+
+;SETTINGS
+
+(define bj-win #f)
+(define bj-lose #f)
+(define lose-count 0)
+(define win-count 0)
+(define dealer-stay #f)
+(define dealer-bust #f)
+(define dealer-cap 0)
+(define char-on-table 1)
+(define bid-amount 0.0)
+(define bid-current 0.0)
+(define bid-select 0)
+(define bj-hit #f)
+(define bj-stay #f)
+(define bj-double-down #f)
+(define added-cards-jak 0)
+(define added-cards-dealer 0)
+(define jak-current-card 0)
+(define dealer-current-card 0)
+(define jturn 0)
+(define dturn 0)
+(define dh-start #f)
+(define d-count 0)
+(define jackpot-win #f)
+
+;COLORS
+(define colorcard #f)
+
+;BLACKJACK DRAWS
+(define in-transition? #f)
+(define popup-bj #f)
+(define bj-dealer-s "Sig")
+(define bj-bid-s "0")
+(define bj-dealer-d #f)
+(define bj-bid-d #f)
+(define jackpotbaby #f)
+(define jackpotbabytime 0)
+(define-extern jackpotcolors string)
+(define-extern jackpot-string string)
+
+(define-extern jcard1s string)
+(define-extern jcard2s string)
+(define-extern jcard3s string)
+(define-extern jcard4s string)
+(define jcard1 #f)
+(define jcard2 #f)
+(define jcard3 #f)
+(define jcard4 #f)
+(define-extern dcard1s string)
+(define-extern dcard2s string)
+(define-extern dcard3s string)
+(define-extern dcard4s string)
+(define dcard1 #f)
+(define dcard2 #f)
+(define dcard3 #f)
+(define dcard4 #f)
+
+(define-extern jcard1i int)
+(define-extern jcard2i int)
+(define-extern jcard3i int)
+(define-extern jcard4i int)
+
+(define-extern dcard1i int)
+(define-extern dcard2i int)
+(define-extern dcard3i int)
+(define-extern dcard4i int)
+
+
+;menu vars
+(define in-menu #f)
+(define menu-slot 0)
+(define menu-pressed? #f)
+(define sub-menu-slot 0)
+(define menu-activate #f)
+(define weapon-id 0)
+(define wait-frame 0)
+(define wait-start #f)
+(define wait-frame2 0)
+(define wait-frame-start2 #f)
+(define camera-locked #f)
+(define camera-unlocked #f)
+(define string-printed? #f)
+(define strong2-printed? #f)
+(define press-and-hold #f)
+(define press-frame 0)
+(define recieved-gm #f)
+(define recieved-gm2 #f)
+(define recieved-gm3 #f)
+(define recieved-gm4 #f)
+(define recieved-gm5 #f)
+(define recieved-gm6 #f)
+(define recieved-gm7 #f)
+(define recieved-gm8 #f)
+(define recieved-gm9 #f)
+(define recieved-gm10 #f)
+(define gm-frame 0)
+(define gm-start #f)
+(define gm-frame2 0)
+(define gm-start2 #f)
+(define gm-frame3 0)
+(define gm-start3 #f)
+(define gm-frame4 0)
+(define gm-start4 #f)
+(define gm-frame5 0)
+(define gm-start5 #f)
+(define gm-frame6 0)
+(define gm-start6 #f)
+(define gm-frame7 0)
+(define gm-start7 #f)
+(define gm-frame8 0)
+(define gm-start8 #f)
+(define gm-frame9 0)
+(define gm-start9 #f)
+(define gm-frame10 0)
+(define gm-start10 #f)
+(define gm-weapon-id 0)
+(define weapon-toggle-false? #f)
+(define-extern death-counter-s string)
+(define-extern death-counter-int int)
+(define in-menu-2 #f)
+(define yes-no #f)
+(define menu2-wait #f)
+(define menu2-frame 0)
+(define true-pause #f)
+(define popup-hint #f)
+(define hint-start #f)
+(define hint-numb 0)
+(define hint-printed? #f)
+(define popup-hint2 #f)
+(define hint-start2 #f)
+(define hint-numb2 0)
+(define hint-printed?2 #f)
+(define error-hint #f)
+(define error-frame 0)
+(define error-start #f)
+(define popup3-start #f)
+(define popup-time 0)
+(define popup-tpfb-n #f)
+(define popup-tpfb-tn 0)
+(define popup-tpfb-h #f)
+(define popup-tpfb-th 0)
+(define popup-hint-gm #f)
+(define popup-hint-gmi 0)
+(define-extern recieved-gm-s string)
+(define-extern recieved-gm-s2 string)
+(define-extern recieved-gm-s3 string)
+(define-extern recieved-gm-s4 string)
+(define-extern recieved-gm-s5 string)
+(define-extern recieved-gm-s6 string)
+(define-extern recieved-gm-s7 string)
+(define-extern recieved-gm-s8 string)
+(define-extern gun-string string)
+(define-extern mod-string string) 
+(define-extern gun-mod-string string)
+(define-extern modifier-string string)
+(define-extern mod-reroll-string string)
+(define gs1 #f)
+(define gs2 #f)
+(define gs3 #f)
+(define gs4 #f)
+(define gs5 #f)
+(define gs6 #f)
+(define gs7 #f)
+(define gs8 #f)
+(define disable-mm 0)
+(define-extern disable-mms string)
+(define done-it #f)
+
+(define enter-grangeri 0)
+(define exit-grangeri 0)
+(define set-functions #f)
+(define enter-granger #f)
+(define exit-granger #f)
+(define turn-on-modifiers #f)
+(define turn-off-modifiers #f)
+(define-extern modifiers-toggle-string string)
+(define tonm-int 0)
+(define toffm-int 0)
+
+(define pm-shot-trigger #f) ;these had to be placed here due to load order
+
+(define inv-frame-start #f)
+(define inv-frame-counter 0)
+(define inv-frame-start-g #f)
+(define inv-frame-counter-g 0)
+(define-extern leg-random-shot symbol)
+(define-extern wm-rand-shot symbol)
+(define leg-random-int 0)
+(define-extern bounce-shot symbol)
+(define-extern bounces-left int)
+(define bounce-shot-int 0)
+(define big-shot-option #f)
+(define big-shot-int 0)
+(define mag-bag-option #f)
+(define mag-bag-int 0)
+(define guard-grenade-option #f)
+(define guard-grenade-int 0)
+(define-extern someone-fire-guard-grenade (function process-drawable vector vector (pointer process)))
+(define-extern someone-fire-guard-shot (function process-drawable vector vector (pointer process)))
+(define-extern someone-fire-red (function process-drawable vector vector (pointer process)))
+(define-extern someone-fire-blue (function process-drawable vector vector (pointer process)))
+(define-extern someone-fire-dark (function process-drawable vector vector (pointer process)))
+(define firingthegun #f)
+(define mehrunes-shot-option #f)
+(define mehrunes-shot-int 0)
+(define mehrunes-start #f)
+(define mehrunes-count 0)
+(define mehrunes-plug #f)
+
+(define blast-shot-int 0)
+(define blast-shot-option #f)
+(define blast-time-start-blue #f)
+(define blast-time-start-yellow #f)
+(define blast-time-start-red #f)
+(define blast-time-start-dark #f)
+(define blast-time-b 0)
+(define blast-time-y 0)
+(define blast-time-r 0)
+(define blast-time-d 0)
+
+(define guardv-5 #f)
+(define guardv-5c 0)
+
+(define eine #f)
+(define einei 0)
+(define gt-i 0.0)
+(define gf-i 0.0)
+(define gc-i 0.0)
+(define gem-takeaway #f)
+(define granger-resist 0)
+(define granger-sound #f)
+
+
+
+
+(define granger-level 0)
+(define granger-activated? #f)
+(define granger2-activated? #f)
+(define granger-teleport #f)
+(define delayed-gt #f)
+(define gt-count 0)
+(define granger-unit 0)
+(define-extern current-situation string)
+(define-extern current-situations string)
+(define granger-win #f)
+
+
+
+
+;-------------GUNMOD DEF----------------------
+(define rapid-fire-option #f) ;option for if its enabled/gotten
+(define rapid-fire-int 0) ;option for weapon 1-4
+(define rapid-fire-blue #f)
+(define rapid-fire-blue-count 0)
+(define double-tap-option #f) ;option for if its enabled/gotten
+(define double-tap-int 0);option for weapon 1-4
+(define infinite-range-option #f) ;option for if its enabled/gotten
+(define infinite-range-int 0);option for weapon 1-4
+(define rapid-cycle-option #f) ;option for if its enabled/gotten
+(define rapid-cycle-int 0);option for weapon 1-4
+(define big-shot-option #f) ;option for if its enabled/gotten
+(define big-shot-int 0);option for weapon 1-4
+(define pm-extra-shot-option #f) ;option for if its enabled/gotten
+(define pm-extra-shot-int 0);option for weapon 1-4
+(define predator-shot-option #f) ;option for if its enabled/gotten
+(define predator-shot-int 0);option for weapon 1-4
+(define guard-shot-option #f) ;option for if its enabled/gotten
+(define guard-shot-int 0);option for weapon 1-4
+
+
+(define peacemaker-ability #f)
+
+
+;BUYING SECRETS BACK IN HELL MODE
+(define secrets-bought? #f)
+
+
+
+
+
 (defenum pickup-type
   :bitfield #f
   :type int32

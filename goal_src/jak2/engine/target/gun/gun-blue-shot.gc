@@ -7,6 +7,386 @@
 
 ;; DECOMP BEGINS
 
+
+
+(define-extern dt-frame-start symbol)
+(define-extern stored-cp? symbol)
+
+
+
+
+
+
+
+(deftype guard-shot (projectile)
+  ((hit-actor?  symbol)
+   (tail-pos    vector  :inline)
+   )
+  )
+
+
+
+(defpartgroup group-guard-grenade
+  :id 138
+  :duration (seconds 0.5)
+  :flags (use-local-clock)
+  :bounds (static-bspherem 0 0 0 2)
+  :parts ((sp-item 618 :fade-after (meters 200) :falloff-to (meters 200)))
+  )
+
+(deftype vehicle-grenade (projectile-bounce)
+  ((blast-radius float  :offset-assert 496)
+   )
+  :method-count-assert 42
+  :size-assert         #x1f4
+  :flag-assert         #x2a018001f4
+  (:methods
+    )
+  )
+(defskelgroup skel-vehicle-grenade eco-canister eco-canister-dark-lod0-jg eco-canister-dark-idle-ja
+              ((eco-canister-dark-lod0-mg (meters 999999)))
+              :bounds (static-spherem 0 0 0 0.3)
+              :texture-level 6
+              )
+
+(defmethod play-impact-sound vehicle-grenade ((this vehicle-grenade) (arg0 projectile-options))
+  (let ((v1-0 arg0))
+    (cond
+      ((zero? v1-0)
+       (sound-play "grenade-fire")
+       )
+      ((= v1-0 (projectile-options lose-altitude))
+       (sound-play "grenade-explode")
+       )
+      )
+    )
+  0
+  (none)
+  )
+
+  (defmethod init-proj-collision! vehicle-grenade ((this vehicle-grenade))
+  "Init the [[projectile]]'s [[collide-shape]]"
+  (let ((s5-0 (new 'process 'collide-shape-moving this (collide-list-enum hit-by-player))))
+    (set! (-> s5-0 dynam) (copy *standard-dynamics* 'process))
+    (set! (-> s5-0 reaction) projectile-bounce-reaction)
+    (set! (-> s5-0 no-reaction)
+          (the-as (function collide-shape-moving collide-query vector vector object) nothing)
+          )
+    (set! (-> s5-0 penetrate-using) (penetrate explode))
+    (let ((v1-7 (new 'process 'collide-shape-prim-sphere s5-0 (the-as uint 0))))
+      (set! (-> v1-7 prim-core action) (collide-action solid))
+      (set-vector! (-> v1-7 local-sphere) 0.0 0.0 0.0 819.2)
+      (set! (-> s5-0 total-prims) (the-as uint 1))
+      (set! (-> s5-0 root-prim) v1-7)
+      )
+    (set! (-> s5-0 nav-radius) (* 0.75 (-> s5-0 root-prim local-sphere w)))
+    (let ((v1-10 (-> s5-0 root-prim)))
+      (set! (-> s5-0 backup-collide-as) (-> v1-10 prim-core collide-as))
+      (set! (-> s5-0 backup-collide-with) (-> v1-10 prim-core collide-with))
+      )
+    (set! (-> s5-0 max-iteration-count) (the-as uint 2))
+    (set! (-> s5-0 event-self) 'touched)
+    (set! (-> this root) s5-0)
+    )
+  (set-collide-with!
+    (-> this root)
+    (collide-spec backgnd jak crate civilian enemy obstacle vehicle-sphere hit-by-others-list player-list pusher)
+    )
+  (set-collide-as! (-> this root) (collide-spec enemy))
+  (set! (-> this root pat-ignore-mask)
+        (new 'static 'pat-surface :noentity #x1 :nojak #x1 :probe #x1 :noproj #x1 :noendlessfall #x1)
+        )
+  (none)
+  )
+
+(defmethod init-proj-settings! vehicle-grenade ((this vehicle-grenade))
+  "Init relevant settings for the [[projectile]] such as gravity, speed, timeout, etc"
+  (set! (-> this attack-mode) 'eco-dark)
+  (initialize-skeleton
+    this
+    (the-as skeleton-group (art-group-get-by-name *level* "skel-vehicle-grenade" (the-as (pointer uint32) #f)))
+    (the-as pair 0)
+    )
+  (let ((t9-2 (method-of-type projectile-bounce init-proj-settings!)))
+    (t9-2 this)
+    )
+  (set! (-> this part) (create-launch-control (-> *part-group-id-table* 138) this))
+  (set! (-> this blast-radius) 16384.0)
+  (set! (-> this max-speed) 90112.0)
+  (set! (-> this timeout) (seconds 4))
+  0
+  (none)
+  )
+
+(defmethod spawn-impact-particles vehicle-grenade ((this vehicle-grenade))
+  "Spawns associated particles with the projectile if applicable"
+  (spawn (-> this part) (-> this root trans))
+  (ja-post)
+  0
+  (none)
+  )
+
+(defmethod noop vehicle-grenade ((this vehicle-grenade))
+  "Does nothing"
+  (spawn (-> this part) (-> this root trans))
+  0
+  (none)
+  )
+
+;; WARN: Return type mismatch sound-id vs none.
+(defmethod play-impact-sound! vehicle-grenade ((this vehicle-grenade))
+  "Plays impact sound"
+  (let* ((a2-0 (-> this root))
+         (v1-0 (-> a2-0 status))
+         )
+    (if (logtest? v1-0 (collide-status touch-surface))
+        (vector-float*! (-> a2-0 transv) (-> a2-0 transv) 0.2)
+        )
+    (when (and (logtest? v1-0 (collide-status impact-surface))
+               (time-elapsed? (-> this played-bounce-time) (seconds 0.3))
+               )
+      (set-time! (-> this played-bounce-time))
+      (sound-play "grenade-bounce")
+      )
+    )
+  (none)
+  )
+
+(defstate impact (vehicle-grenade)
+  :virtual #t
+  :event (behavior ((proc process) (argc int) (message symbol) (block event-message-block))
+    (case message
+      (('touched)
+       (if (send-event proc 'attack (-> block param 0) (static-attack-info ((id (-> *game-info* attack-id)) (mode 'explode))))
+           #t
+           )
+       )
+      )
+    )
+  :code (behavior ()
+    (let ((gp-0 (new 'stack-no-clear 'explosion-init-params)))
+      (set! (-> gp-0 spawn-point quad) (-> self root trans quad))
+      (quaternion-copy! (-> gp-0 spawn-quat) (-> self root quat))
+      (set! (-> gp-0 radius) (-> self blast-radius))
+      (set! (-> gp-0 group) (-> *part-group-id-table* 76))
+      (set! (-> gp-0 collide-with)
+            (collide-spec backgnd jak crate civilian enemy obstacle vehicle-sphere hit-by-others-list player-list pusher)
+            )
+      (set! (-> gp-0 penetrate-using) (penetrate explode))
+      (explosion-spawn self explosion gp-0)
+      )
+    (logior! (-> self draw status) (draw-control-status no-draw))
+    (let ((v1-11 (-> self root root-prim)))
+      (set! (-> v1-11 prim-core collide-as) (collide-spec))
+      (set! (-> v1-11 prim-core collide-with) (collide-spec))
+      )
+    0
+    (while (-> self child)
+      (suspend)
+      )
+    (deactivate self)
+    )
+  )
+
+  (defun someone-fire-guard-grenade ((arg0 process-drawable) (arg1 vector) (arg2 vector))
+  (when (not (logtest? (-> *game-info* secrets) (game-secrets invulnerable)))
+        (set! inv-frame-start-g #t)
+      )
+  (let ((a1-9 (new 'stack-no-clear 'projectile-init-by-other-params)))
+          (set! (-> a1-9 ent) (-> arg0 entity))
+          (set! (-> a1-9 charge) 1.0)
+          (set! (-> a1-9 options) (projectile-options account-for-target-velocity proj-options-8000))
+          (set! (-> a1-9 pos quad) (-> arg1 quad))
+          (set! (-> a1-9 notify-handle) (the-as handle #f))
+          (set! (-> a1-9 owner-handle) (the-as handle #f))
+          (set! (-> a1-9 ignore-handle) (process->handle (the-as process (send-event *target* 'get-vehicle))))
+          (let* ((v1-24 *game-info*)
+                 (a0-23 (+ (-> v1-24 attack-id) 1))
+                 )
+            (set! (-> v1-24 attack-id) a0-23)
+            (set! (-> a1-9 attack-id) a0-23)
+            )
+          (set! (-> a1-9 timeout) (seconds 4))
+          (vector-normalize-copy! (-> a1-9 vel) arg2 819200.0)
+          (spawn-projectile vehicle-grenade a1-9 arg0 *default-dead-pool*)
+          )
+  )
+
+  (defun someone-fire-guard-shot ((arg0 process-drawable) (arg1 vector) (arg2 vector))
+  (when (not (logtest? (-> *game-info* secrets) (game-secrets invulnerable)))
+        (set! inv-frame-start #t)
+      )
+  (let ((s4-1 (new 'stack-no-clear 'projectile-init-by-other-params)))
+            (set! (-> s4-1 ent) (-> arg0 entity))
+            (set! (-> s4-1 charge) 1.0)
+            (set! (-> s4-1 options) (projectile-options account-for-target-velocity proj-options-8000))
+            (set! (-> s4-1 pos quad) (-> arg1 quad))
+            (set! (-> s4-1 vel quad) (-> arg2 quad))
+            (set! (-> s4-1 notify-handle) (the-as handle #f))
+            (set! (-> s4-1 owner-handle) (the-as handle #f))
+            (set! (-> s4-1 ignore-handle) (process->handle (the-as process (send-event *target* 'get-vehicle))))
+            (let* ((a0-13 *game-info*)
+            (a1-12 (+ (-> a0-13 attack-id) 1))
+            )
+        (set! (-> a0-13 attack-id) a1-12)
+        (set! (-> s4-1 attack-id) a1-12)
+        )
+      (set! (-> s4-1 timeout) (seconds 4))
+      (vector-normalize! (-> s4-1 vel) 819200.0)
+      (when (not (logtest? (-> *game-info* secrets) (game-secrets invulnerable)))
+        (set! inv-frame-start #t)
+      )
+      (spawn-projectile guard-shot s4-1 arg0 *default-dead-pool*)
+      )
+  )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+(deftype gun-dark-shot (projectile)
+  ((blast-radius  float           :offset-assert 472)
+   (core-position vector  :inline :offset-assert 480)
+   (core-velocity vector  :inline :offset-assert 496)
+   (spin-vector   vector  :inline :offset-assert 512)
+   (track-target  handle          :offset-assert 528)
+   (size-t        float           :offset-assert 536)
+   (result-array  handle  16      :offset-assert 544)
+   (charge-sound  sound-id        :offset-assert 672)
+   (fire-sound    sound-id        :offset-assert 676)
+   (trail-sound   sound-id        :offset-assert 680)
+   (explode-sound sound-id        :offset-assert 684)
+   (start-pilot?  basic           :offset-assert 688)
+   )
+  :method-count-assert 42
+  :size-assert         #x2b4
+  :flag-assert         #x2a024002b4
+  (:state-methods
+    startup
+    fizzle
+    )
+  )
+
+  (deftype metalhead-shot (projectile)
+  ((tail-pos vector :inline :offset-assert 480)
+
+   )
+  :heap-base #x170
+  :method-count-assert 40
+  :size-assert         #x1f0
+  :flag-assert         #x28017001f0
+  )
+
+  (deftype metalhead-predator-shot (metalhead-shot)
+  ()
+  :heap-base #x170
+  :method-count-assert 40
+  :size-assert         #x1f0
+  :flag-assert         #x28017001f0
+  )
+
+
+
+
+(deftype turret-shot (guard-shot)
+  ((hit-pos vector :inline :offset-assert 496)
+   )
+  :heap-base #x180
+  :method-count-assert 40
+  :size-assert         #x200
+  :flag-assert         #x2801800200
+  )
+
+  (defun guard-shot-move ((arg0 guard-shot))
+  (projectile-move-fill-line-sphere arg0)
+  (let ((s5-0 (-> arg0 root)))
+    (let ((s4-0 (new 'stack-no-clear 'vector)))
+      (vector-! s4-0 (-> arg0 tail-pos) (-> s5-0 trans))
+      (let ((f0-0 (vector-length s4-0)))
+        (when (< 36864.0 f0-0)
+          (vector-normalize! s4-0 36864.0)
+          (vector+! (-> arg0 tail-pos) (-> s5-0 trans) s4-0)
+          )
+        )
+      )
+    (when (logtest? (-> s5-0 status) (collide-status touch-surface))
+      (if (logtest? (-> arg0 root status) (collide-status touch-actor))
+          (set! (-> arg0 hit-actor?) #t)
+          )
+      (go (method-of-object arg0 impact))
+      )
+    )
+  0
+  (none)
+  )
+
+(defmethod init-proj-settings! guard-shot ((this guard-shot))
+  "Init relevant settings for the [[projectile]] such as gravity, speed, timeout, etc"
+  (set! (-> this hit-actor?) #f)
+  (set! (-> this tail-pos quad) (-> this root trans quad))
+  (set! (-> this attack-mode) 'guard-shot)
+  (set! (-> this max-speed) 819200.0)
+  (set! (-> this move) guard-shot-move)
+  (set! (-> this update-velocity) projectile-update-velocity-space-wars)
+  (set! (-> this timeout) (seconds 0.5))
+  (logior! (-> this options) (projectile-options account-for-target-velocity))
+  (set-gravity-length (-> this root dynam) 573440.0)
+  (none)
+  )
+
+
+
+  (defun metalhead-shot-move ((arg0 metalhead-shot))
+  (projectile-move-fill-line-sphere arg0)
+  (let ((s5-0 (-> arg0 root)))
+    (let ((s4-0 (new 'stack-no-clear 'vector)))
+      (vector-! s4-0 (-> arg0 tail-pos) (-> s5-0 trans))
+      (let ((f0-0 (vector-length s4-0)))
+        (when (< 49152.0 f0-0)
+          (vector-normalize! s4-0 49152.0)
+          (vector+! (-> arg0 tail-pos) (-> s5-0 trans) s4-0)
+          )
+        )
+      )
+    (if (logtest? (-> s5-0 status) (collide-status touch-surface))
+        (go (method-of-object arg0 impact))
+        )
+    )
+  0
+  (none)
+  )
+
+
+
+(defmethod init-proj-settings! metalhead-predator-shot ((this metalhead-predator-shot))
+  "Init relevant settings for the [[projectile]] such as gravity, speed, timeout, etc"
+  (set! (-> this tail-pos quad) (-> this root trans quad))
+  (set! (-> this attack-mode) 'eco-yellow)
+  (set! (-> this max-speed) 532480.0)
+  (set! (-> this move) metalhead-shot-move)
+  (set! (-> this update-velocity) projectile-update-velocity-space-wars)
+  (set! (-> this timeout) (seconds 0.767))
+  (set! (-> this sound-id) (new-sound-id))
+  (set-gravity-length (-> this root dynam) 573440.0)
+  (none)
+  )
+
+
+
+
+
+
 (defbehavior target-gun-fire-blue target ()
   (let ((gp-0 (-> self gun))
         (s4-0 (-> self gun fire-dir-out))
@@ -33,10 +413,56 @@
         (set! (-> s4-1 attack-id) a0-15)
         )
       (set! (-> s4-1 timeout) (seconds 4))
-      (spawn-projectile gun-blue-shot s4-1 (ppointer->process (-> gp-0 gun)) *default-dead-pool*)
+      (when (= rapid-fire-int 3)
+        (set! rapid-fire-blue #t)
       )
+            (when (and (!= guard-grenade-int 3)(!= guard-shot-int 3)) ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;WEAPON MOD CHANGES OCCUR HERE AND DOWN
+        (spawn-projectile gun-blue-shot s4-1 (ppointer->process (-> gp-0 gun)) *default-dead-pool*)
+      )
+      (when (and (= guard-grenade-int 3)(= guard-grenade-option #t))
+      (someone-fire-guard-grenade *target* (-> *target* gun fire-point) (-> *target* gun fire-dir-out))
+      (when (not (logtest? (-> *game-info* secrets) (game-secrets invulnerable)))
+        (set! inv-frame-start #t)
+      )
+      )
+      (when (and (= leg-random-int 3)(= leg-random-shot #t))                                    ;random shot
+        (set! wm-rand-shot #t)
+      )
+      (when (and (and (= guard-shot-option #t)(= guard-shot-int 3)))          ;guard-shot
+      (when (not (logtest? (-> *game-info* secrets) (game-secrets invulnerable)))
+        (set! inv-frame-start-g #t)
+      )
+          (someone-fire-guard-shot *target* (-> *target* gun fire-point) (-> *target* gun fire-dir-out))
+    )
+      (when (and (and (= predator-shot-option #t)(= predator-shot-int 3)))      ;predator-shot (DEPRECATED)
+      (when (not (logtest? (-> *game-info* secrets) (game-secrets invulnerable)))
+        (set! inv-frame-start #t)
+      )
+        (let ((s5-0 (-> *target* gun))
+          (gp-0 (new 'stack-no-clear 'projectile-init-by-other-params))
+          )
+          (set! (-> gp-0 ent) (-> *target* entity))
+          (set! (-> gp-0 charge) (-> s5-0 fire-charge))
+          (set! (-> gp-0 options) (projectile-options))
+          (set! (-> gp-0 pos quad) (-> *target* gun fire-point quad))
+          (set! (-> gp-0 vel quad) (-> *target* gun fire-dir-out quad))
+          (set! (-> gp-0 notify-handle) (the-as handle #f))
+          (set! (-> gp-0 owner-handle) (the-as handle #f))
+          (set! (-> gp-0 ignore-handle) (process->handle (the-as process (send-event *target* 'get-vehicle))))
+          (set! (-> gp-0 timeout) (seconds 4))
+          (spawn-projectile metalhead-predator-shot gp-0 (ppointer->process (-> *target* gun gun)) *default-dead-pool*)
+        )
+      )
+      )
+      (when (and (and (= double-tap-option #t) (= double-tap-int 3) (rand-vu-percent? 0.2)))         ;double-tap
+        (set! dt-frame-start #t)
+      )
+      (when (and (and (= pm-extra-shot-option #t) (= pm-extra-shot-int 3)(rand-vu-percent? 0.0125)))    ;chanced-extra-peacemaker-shot
+        (someone-fire-dark *target* (-> *target* gun fire-point) (-> *target* gun fire-dir-out))
+      )  
     )
   )
+
 
 (deftype gun-blue-shot (projectile)
   ((init-pos        vector  :inline)
@@ -304,12 +730,51 @@
     (set! (-> this timeout) 1)
     (set! (-> this move) gun-blue-shot-move)
     (vector-reset! (-> this collide-normal))
-    (set! (-> this damage) (if (logtest? (game-feature gun-upgrade-damage) (-> *game-info* features))
-                               4.0
-                               2.0
-                               )
-          )
+    (when (= stored-cp? #f)
+              (set! (-> this damage) (if (logtest? (game-feature gun-upgrade-damage) (-> *game-info* features))
+                            4.0
+                            2.0
+                            )
+        )
+            )
+            (when (and (rand-vu-percent? 0.07)(= mehrunes-shot-int 3)(= mehrunes-shot-option #t))
+              (set! mehrunes-plug #t)
+            )
+            (when (= mehrunes-plug #t)
+        (set! (-> this damage) 999.0)
+        (set! mehrunes-plug #f)
+      )
+      (when (= stored-cp? #t)
+              (set! (-> this damage) 0.6)
+            )
     0
     (none)
     )
   )
+
+
+  (defun someone-fire-blue ((arg0 process-drawable) (arg1 vector) (arg2 vector))
+    (let ((gp-0 (-> *target* gun))
+        (s4-0 (-> *target* gun fire-dir-out))
+        (s5-0 (new 'stack-no-clear 'vector))
+        )
+    (let ((s4-1 (new 'stack-no-clear 'projectile-init-by-other-params)))
+      (set! (-> s4-1 ent) (-> arg0 entity))
+      (set! (-> s4-1 charge) 1.0)
+      (set! (-> s4-1 options) (projectile-options account-for-target-velocity deal-damage proj-options-8000))
+      (set! (-> s4-1 pos quad) (-> arg1 quad))
+      (set! (-> s4-1 vel quad) (-> arg2 quad))
+      (set! (-> s4-1 notify-handle) (the-as handle #f))
+      (set! (-> s4-1 owner-handle) (the-as handle #f))
+      (set! (-> s4-1 ignore-handle) (process->handle arg0))
+      (let* ((v1-13 *game-info*)
+             (a0-15 (+ (-> v1-13 attack-id) 1))
+             )
+        (set! (-> v1-13 attack-id) a0-15)
+        (set! (-> s4-1 attack-id) a0-15)
+        )
+      (set! (-> s4-1 timeout) (seconds 4))
+      (spawn-projectile gun-blue-shot s4-1 (ppointer->process (-> gp-0 gun)) *default-dead-pool*)
+      )
+    )
+    )

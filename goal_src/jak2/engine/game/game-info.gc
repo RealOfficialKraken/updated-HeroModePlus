@@ -7,6 +7,10 @@
 
 ;; initialize was manually fixed.
 
+(define-extern dark-traffic symbol)
+
+
+
 (define-extern demo? (function symbol))
 (define-extern task-resolution-close! (function game-task symbol))
 (define-extern *lightning-darkjak-pill* lightning-spec)
@@ -299,7 +303,7 @@
     (('dead 'life)
      (+! (-> this total-deaths) 1)
      (+! (-> this continue-deaths) 1)
-     (+! (-> this task-deaths) 1)
+     (+! (-> this task-deaths) 0)
      (when *target*
        (let ((s4-1 (-> *target* current-level info)))
          (set! (-> this deaths-per-level (-> s4-1 task-level))
@@ -318,7 +322,7 @@
        )
      )
     (('try)
-     (+! (-> this total-trys) 1)
+     (+! (-> this total-trys) 0)
      )
     )
   (case arg0
@@ -415,10 +419,10 @@
      (set! (-> this wanted-flash) #f)
      (set! (-> this distance) 0.0)
      (set! (-> this attack-id) (the-as uint 2))
-     (set! (-> this total-trys) 0)
+     ;(set! (-> this total-trys) 0)
      (set! (-> this total-deaths) 0)
      (set! (-> this continue-deaths) 0)
-     (set! (-> this task-deaths) 0)
+     ;(set! (-> this task-deaths) 0)
      (set! (-> this death-pos length) 0)
      (set! (-> this game-start-time) (-> *display* game-clock frame-counter))
      (set! (-> this task-pickup-time) (-> *display* game-clock frame-counter))
@@ -628,7 +632,7 @@
            (set! (-> this task-deaths) 0)
            (set! (-> this task-pickup-time) (-> *display* game-clock frame-counter))
            (set! (-> this unknown-array1 task) (-> *display* game-clock frame-counter))
-           (+! (-> this fuel) 1.0)
+           (+! (-> this fuel) 0.0)
            (logior! (-> this task-perm-list data task status) (entity-perm-status complete))
            (task-resolution-close! (the-as game-task task))
            )
