@@ -1428,11 +1428,16 @@
     (set! (-> self hud) (the-as handle #f))
     (remove-setting! 'point-of-interest)
     (remove-setting! 'fov)
-    (when arg0
+    (when (= stored-cp? #t)
+      (set! tp-fb-win #t)
+    )
+    (when (= stored-cp? #f)
+      (when arg0
       (remove-setting! 'music)
       (send-event (handle->process (-> self rift-occlude)) 'movie-pos)
       (outro-play)
       )
+    )
     )
   :exit (behavior ()
     (ja-channel-push! 1 (seconds 0.1))

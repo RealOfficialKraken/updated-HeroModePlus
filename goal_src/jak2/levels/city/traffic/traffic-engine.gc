@@ -1836,6 +1836,24 @@ Process is recycled and moved to reserved, if it deactivates."
       (when #t
         (set-time! (-> this alert-state start-time))
         (logclear! (-> this alert-state flags) (traffic-alert-flag alert-ending))
+        (when (and 
+        (and 
+        (not (task-node-open? (game-task-node city-save-lurkers-save-lurkers)))
+        (not (task-node-open? (game-task-node city-meet-brutter-meet-brutter)))
+        )
+        (= dark-traffic #t)
+        )
+            (send-event *traffic-manager* 'set-alert-level 4)
+           )
+           (when (and 
+        (or 
+        (task-node-open? (game-task-node city-save-lurkers-save-lurkers))
+        (task-node-open? (game-task-node city-meet-brutter-meet-brutter))
+        )
+        (= dark-traffic #t)
+        )
+            (send-event *traffic-manager* 'set-alert-level 3)
+           )
         )
       (set! (-> this alert-state level) (the-as uint (max (the-as int (-> this alert-state level)) v1-6)))
       )

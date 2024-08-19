@@ -1721,7 +1721,7 @@ FINISHED :D
           (when v0-1
             (set! (-> (the-as gun-dark-shot (-> v0-1 0)) track-target) (-> *target* gun track-target 0 handle))
             (+! pm-shot-counter 1)
-            (when (= pm-shot-counter 30)
+            (when (= pm-shot-counter 120)
               (set! pm-shot-trigger #f)
               (set! pm-shot-counter 0)
               (if (= gun-dark-present? #t)
@@ -1841,7 +1841,7 @@ FINISHED :D
   )
   (when (and (and (= frame-count 40)(= new-game-s? #t)(= stored-cp? #t))) ;starts after a little bit to avoid crashes, teleports jak to final boss spawnpoint and sets the game task
     (play-task (game-task nest-boss) 'debug #f)
-    (set! pause-menu-blocked? #t)
+    ;(set! pause-menu-blocked? #t)
     (when (= hell-mode-option #t)
       (set! (-> *game-info* fuel) 10.0)
       (print "[MOD] Hellmode #t, good luck during this fight }:)
