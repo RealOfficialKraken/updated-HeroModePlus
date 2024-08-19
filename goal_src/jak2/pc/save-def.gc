@@ -1,0 +1,1090 @@
+;name: save-def.gc
+(in-package goal)
+
+(defun stat-checker! ()
+
+    (when (<= (-> *game-info* auto-save-count) 1000000000)
+        (set! (-> *game-info* auto-save-count) 1000000000)
+    )
+
+    (when ;yellow gun rapid-fire
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 10) 1) 1)
+    (= rapid-fire-int 1)
+    )
+        (+! (-> *game-info* auto-save-count) 5)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 10) 1) 0)
+            (-! (-> *game-info* auto-save-count) 1)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 10) 1) 0)
+            (+! (-> *game-info* auto-save-count) 1)
+        )
+    )
+
+    (when ;red gun rapid-fire
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 10) 1) 2)
+    (= rapid-fire-int 2)
+    )
+        (+! (-> *game-info* auto-save-count) 5)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 10) 1) 0)
+            (-! (-> *game-info* auto-save-count) 1)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 10) 1) 0)
+            (+! (-> *game-info* auto-save-count) 2)
+        )
+    )
+
+    (when ;blue gun rapid-fire
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 10) 1) 3)
+    (= rapid-fire-int 3)
+    )
+        (+! (-> *game-info* auto-save-count) 5)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 10) 1) 0)
+            (-! (-> *game-info* auto-save-count) 1)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 10) 1) 0)
+            (+! (-> *game-info* auto-save-count) 3)
+        )
+    )
+
+    (when ;dark gun rapid-fire
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 10) 1) 4)
+    (= rapid-fire-int 4)
+    )
+        (+! (-> *game-info* auto-save-count) 5)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 10) 1) 0)
+            (-! (-> *game-info* auto-save-count) 1)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 10) 1) 0)
+            (+! (-> *game-info* auto-save-count) 4)
+        )
+    )
+
+    (when ;yellow gun double-tap
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 100) 10) 1)
+    (= double-tap-int 1)
+    )
+        (+! (-> *game-info* auto-save-count) 50)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 100) 10) 0)
+            (-! (-> *game-info* auto-save-count) 10)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 100) 10) 0)
+            (+! (-> *game-info* auto-save-count) 10)
+        )
+    )
+
+    (when ;red gun double-tap
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 100) 10) 2)
+    (= double-tap-int 2)
+    )
+        (+! (-> *game-info* auto-save-count) 50)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 100) 10) 0)
+            (-! (-> *game-info* auto-save-count) 10)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 100) 10) 0)
+            (+! (-> *game-info* auto-save-count) 20)
+        )
+    )
+
+    (when ;blue gun double-tap
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 100) 10) 3)
+    (= double-tap-int 3)
+    )
+        (+! (-> *game-info* auto-save-count) 50)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 100) 10) 0)
+            (-! (-> *game-info* auto-save-count) 10)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 100) 10) 0)
+            (+! (-> *game-info* auto-save-count) 30)
+        )
+    )
+
+    (when ;dark gun double-tap
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 100) 10) 4)
+    (= double-tap-int 4)
+    )
+        (+! (-> *game-info* auto-save-count) 50)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 100) 10) 0)
+            (-! (-> *game-info* auto-save-count) 10)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 100) 10) 0)
+            (+! (-> *game-info* auto-save-count) 40)
+        )
+    )
+
+    (when ;yellow gun guard-shot
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 1000) 100) 1)
+    (= guard-shot-int 1)
+    )
+        (+! (-> *game-info* auto-save-count) 500)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 1000) 100) 0)
+            (-! (-> *game-info* auto-save-count) 100)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 1000) 100) 0)
+            (+! (-> *game-info* auto-save-count) 100)
+        )
+    )
+
+    (when ;red gun guard-shot
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 1000) 100) 2)
+    (= guard-shot-int 2)
+    )
+        (+! (-> *game-info* auto-save-count) 500)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 1000) 100) 0)
+            (-! (-> *game-info* auto-save-count) 100)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 1000) 100) 0)
+            (+! (-> *game-info* auto-save-count) 200)
+        )
+    )
+
+    (when ;blue gun guard-shot
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 1000) 100) 3)
+    (= guard-shot-int 3)
+    )
+        (+! (-> *game-info* auto-save-count) 500)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 1000) 100) 0)
+            (-! (-> *game-info* auto-save-count) 100)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 1000) 100) 0)
+            (+! (-> *game-info* auto-save-count) 300)
+        )
+    )
+
+    (when ;dark gun guard-shot
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 1000) 100) 4)
+    (= guard-shot-int 4)
+    )
+        (+! (-> *game-info* auto-save-count) 500)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 1000) 100) 0)
+            (-! (-> *game-info* auto-save-count) 100)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 1000) 100) 0)
+            (+! (-> *game-info* auto-save-count) 400)
+        )
+    )
+
+    (when ;yellow gun guard-grenade
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 10000) 1000) 1)
+    (= guard-grenade-int 1)
+    )
+        (+! (-> *game-info* auto-save-count) 5000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 10000) 1000) 0)
+            (-! (-> *game-info* auto-save-count) 1000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 10000) 1000) 0)
+            (+! (-> *game-info* auto-save-count) 1000)
+        )
+    )
+
+    (when ;red gun guard-grenade
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 10000) 1000) 2)
+    (= guard-grenade-int 2)
+    )
+        (+! (-> *game-info* auto-save-count) 5000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 10000) 1000) 0)
+            (-! (-> *game-info* auto-save-count) 1000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 10000) 1000) 0)
+            (+! (-> *game-info* auto-save-count) 2000)
+        )
+    )
+
+    (when ;blue gun guard-grenade
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 10000) 1000) 3)
+    (= guard-grenade-int 3)
+    )
+        (+! (-> *game-info* auto-save-count) 5000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 10000) 1000) 0)
+            (-! (-> *game-info* auto-save-count) 1000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 10000) 1000) 0)
+            (+! (-> *game-info* auto-save-count) 3000)
+        )
+    )
+
+    (when ;dark gun guard-grenade
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 10000) 1000) 4)
+    (= guard-grenade-int 4)
+    )
+        (+! (-> *game-info* auto-save-count) 5000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 10000) 1000) 0)
+            (-! (-> *game-info* auto-save-count) 1000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 10000) 1000) 0)
+            (+! (-> *game-info* auto-save-count) 4000)
+        )
+    )
+
+    (when ;yellow gun leg-random
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 100000) 10000) 1)
+    (= leg-random-int 1)
+    )
+        (+! (-> *game-info* auto-save-count) 50000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 100000) 10000) 0)
+            (-! (-> *game-info* auto-save-count) 10000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 100000) 10000) 0)
+            (+! (-> *game-info* auto-save-count) 10000)
+        )
+    )
+
+    (when ;red gun leg-random
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 100000) 10000) 2)
+    (= leg-random-int 2)
+    )
+        (+! (-> *game-info* auto-save-count) 50000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 100000) 10000) 0)
+            (-! (-> *game-info* auto-save-count) 10000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 100000) 10000) 0)
+            (+! (-> *game-info* auto-save-count) 20000)
+        )
+    )
+
+    (when ;blue gun leg-random
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 100000) 10000) 3)
+    (= leg-random-int 3)
+    )
+        (+! (-> *game-info* auto-save-count) 50000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 100000) 10000) 0)
+            (-! (-> *game-info* auto-save-count) 10000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 100000) 10000) 0)
+            (+! (-> *game-info* auto-save-count) 30000)
+        )
+    )
+
+    (when ;dark gun leg-random
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 100000) 10000) 4)
+    (= leg-random-int 4)
+    )
+        (+! (-> *game-info* auto-save-count) 50000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 100000) 10000) 0)
+            (-! (-> *game-info* auto-save-count) 10000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 100000) 10000) 0)
+            (+! (-> *game-info* auto-save-count) 40000)
+        )
+    )
+
+    (when ;yellow gun pm-extra-shot
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 1000000) 100000) 1)
+    (= leg-random-int 1)
+    )
+        (+! (-> *game-info* auto-save-count) 500000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 1000000) 100000) 0)
+            (-! (-> *game-info* auto-save-count) 100000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 1000000) 100000) 0)
+            (+! (-> *game-info* auto-save-count) 100000)
+        )
+    )
+
+    (when ;red gun pm-extra-shot
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 1000000) 100000) 2)
+    (= leg-random-int 2)
+    )
+        (+! (-> *game-info* auto-save-count) 500000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 1000000) 100000) 0)
+            (-! (-> *game-info* auto-save-count) 100000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 1000000) 100000) 0)
+            (+! (-> *game-info* auto-save-count) 200000)
+        )
+    )
+
+    (when ;blue gun pm-extra-shot
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 1000000) 100000) 3)
+    (= leg-random-int 3)
+    )
+        (+! (-> *game-info* auto-save-count) 500000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 1000000) 100000) 0)
+            (-! (-> *game-info* auto-save-count) 100000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 1000000) 100000) 0)
+            (+! (-> *game-info* auto-save-count) 300000)
+        )
+    )
+
+    (when ;dark gun pm-extra-shot
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 1000000) 100000) 4)
+    (= leg-random-int 4)
+    )
+        (+! (-> *game-info* auto-save-count) 500000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 1000000) 100000) 0)
+            (-! (-> *game-info* auto-save-count) 100000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 1000000) 100000) 0)
+            (+! (-> *game-info* auto-save-count) 400000)
+        )
+    )
+
+    (when ;yellow gun mag-bag
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 10000000) 1000000) 1)
+    (= mag-bag-int 1)
+    )
+        (+! (-> *game-info* auto-save-count) 5000000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 10000000) 1000000) 0)
+            (-! (-> *game-info* auto-save-count) 1000000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 10000000) 1000000) 0)
+            (+! (-> *game-info* auto-save-count) 1000000)
+        )
+    )
+
+    (when ;red gun mag-bag
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 10000000) 1000000) 2)
+    (= mag-bag-int 2)
+    )
+        (+! (-> *game-info* auto-save-count) 5000000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 10000000) 1000000) 0)
+            (-! (-> *game-info* auto-save-count) 1000000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 10000000) 1000000) 0)
+            (+! (-> *game-info* auto-save-count) 2000000)
+        )
+    )
+
+    (when ;blue gun mag-bag
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 10000000) 1000000) 3)
+    (= mag-bag-int 3)
+    )
+        (+! (-> *game-info* auto-save-count) 5000000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 10000000) 1000000) 0)
+            (-! (-> *game-info* auto-save-count) 1000000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 10000000) 1000000) 0)
+            (+! (-> *game-info* auto-save-count) 3000000)
+        )
+    )
+
+    (when ;dark gun mag-bag
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 10000000) 1000000) 4)
+    (= mag-bag-int 4)
+    )
+        (+! (-> *game-info* auto-save-count) 5000000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 10000000) 1000000) 0)
+            (-! (-> *game-info* auto-save-count) 1000000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 10000000) 1000000) 0)
+            (+! (-> *game-info* auto-save-count) 4000000)
+        )
+    )
+
+    (when ;yellow gun mehrunes-shot
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 100000000) 10000000) 1)
+    (= mehrunes-shot-int 1)
+    )
+        (+! (-> *game-info* auto-save-count) 50000000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 100000000) 10000000) 0)
+            (-! (-> *game-info* auto-save-count) 10000000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 100000000) 10000000) 0)
+            (+! (-> *game-info* auto-save-count) 10000000)
+        )
+    )
+
+    (when ;red gun mehrunes-shot
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 100000000) 10000000) 2)
+    (= mehrunes-shot-int 2)
+    )
+        (+! (-> *game-info* auto-save-count) 50000000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 100000000) 10000000) 0)
+            (-! (-> *game-info* auto-save-count) 10000000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 100000000) 10000000) 0)
+            (+! (-> *game-info* auto-save-count) 20000000)
+        )
+    )
+
+    (when ;blue gun mehrunes-shot
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 100000000) 10000000) 3)
+    (= mehrunes-shot-int 3)
+    )
+        (+! (-> *game-info* auto-save-count) 50000000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 100000000) 10000000) 0)
+            (-! (-> *game-info* auto-save-count) 10000000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 100000000) 10000000) 0)
+            (+! (-> *game-info* auto-save-count) 30000000)
+        )
+    )
+
+    (when ;dark gun mehrunes-shot
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 100000000) 10000000) 4)
+    (= mehrunes-shot-int 4)
+    )
+        (+! (-> *game-info* auto-save-count) 50000000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 100000000) 10000000) 0)
+            (-! (-> *game-info* auto-save-count) 10000000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 100000000) 10000000) 0)
+            (+! (-> *game-info* auto-save-count) 40000000)
+        )
+    )
+
+    (when ;yellow gun blast-shot
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 1000000000) 100000000) 1)
+    (= blast-shot-int 1)
+    )
+        (+! (-> *game-info* auto-save-count) 500000000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 1000000000) 100000000) 0)
+            (-! (-> *game-info* auto-save-count) 100000000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 1000000000) 100000000) 0)
+            (+! (-> *game-info* auto-save-count) 100000000)
+        )
+    )
+
+    (when ;red gun blast-shot
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 1000000000) 100000000) 2)
+    (= blast-shot-int 2)
+    )
+        (+! (-> *game-info* auto-save-count) 500000000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 1000000000) 100000000) 0)
+            (-! (-> *game-info* auto-save-count) 100000000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 1000000000) 100000000) 0)
+            (+! (-> *game-info* auto-save-count) 200000000)
+        )
+    )
+
+    (when ;blue gun blast-shot
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 1000000000) 100000000) 3)
+    (= blast-shot-int 3)
+    )
+        (+! (-> *game-info* auto-save-count) 500000000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 1000000000) 100000000) 0)
+            (-! (-> *game-info* auto-save-count) 100000000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 1000000000) 100000000) 0)
+            (+! (-> *game-info* auto-save-count) 300000000)
+        )
+    )
+
+    (when ;dark gun blast-shot
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 1000000000) 100000000) 4)
+    (= blast-shot-int 4)
+    )
+        (+! (-> *game-info* auto-save-count) 500000000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 1000000000) 100000000) 0)
+            (-! (-> *game-info* auto-save-count) 100000000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 1000000000) 100000000) 0)
+            (+! (-> *game-info* auto-save-count) 400000000)
+        )
+    )
+
+
+
+    (when (= wm-refresh #t)
+    
+    (when ;none rapid-fire
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 10) 1) 0)
+    (= rapid-fire-int 0)
+    )
+        (+! (-> *game-info* auto-save-count) 5)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 10) 1) 0)
+            (-! (-> *game-info* auto-save-count) 1)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 10) 1) 0)
+            (+! (-> *game-info* auto-save-count) 0)
+        )
+    )
+    
+    (when ;none double-tap
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 100) 10) 0)
+    (= double-tap-int 0)
+    )
+        (+! (-> *game-info* auto-save-count) 50)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 100) 10) 0)
+            (-! (-> *game-info* auto-save-count) 10)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 100) 10) 0)
+            (+! (-> *game-info* auto-save-count) 0)
+        )
+    )
+    
+    (when ;none guard-shot
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 1000) 100) 0)
+    (= guard-shot-int 0)
+    )
+        (+! (-> *game-info* auto-save-count) 500)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 1000) 100) 0)
+            (-! (-> *game-info* auto-save-count) 100)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 1000) 100) 0)
+            (+! (-> *game-info* auto-save-count) 0)
+        )
+    )
+    
+    (when ;none guard-grenade
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 10000) 1000) 0)
+    (= guard-grenade-int 0)
+    )
+        (+! (-> *game-info* auto-save-count) 5000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 10000) 1000) 0)
+            (-! (-> *game-info* auto-save-count) 1000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 10000) 1000) 0)
+            (+! (-> *game-info* auto-save-count) 0)
+        )
+    )
+    
+    (when ;none leg-random
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 100000) 10000) 0)
+    (= leg-random-int 0)
+    )
+        (+! (-> *game-info* auto-save-count) 50000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 100000) 10000) 0)
+            (-! (-> *game-info* auto-save-count) 10000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 100000) 10000) 0)
+            (+! (-> *game-info* auto-save-count) 0)
+        )
+    )
+
+    (when ;none pm-extra-shot
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 1000000) 100000) 0)
+    (= leg-random-int 0)
+    )
+        (+! (-> *game-info* auto-save-count) 500000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 1000000) 100000) 0)
+            (-! (-> *game-info* auto-save-count) 100000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 1000000) 100000) 0)
+            (+! (-> *game-info* auto-save-count) 0)
+        )
+    )
+    (when ;none mag-bag
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 10000000) 1000000) 0)
+    (= mag-bag-int 0)
+    )
+        (+! (-> *game-info* auto-save-count) 5000000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 10000000) 1000000) 0)
+            (-! (-> *game-info* auto-save-count) 1000000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 10000000) 1000000) 0)
+            (+! (-> *game-info* auto-save-count) 0)
+        )
+    )
+
+    (when ;none mehrunes-shot
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 100000000) 10000000) 0)
+    (= mehrunes-shot-int 0)
+    )
+        (+! (-> *game-info* auto-save-count) 50000000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 100000000) 10000000) 0)
+            (-! (-> *game-info* auto-save-count) 10000000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 100000000) 10000000) 0)
+            (+! (-> *game-info* auto-save-count) 0)
+        )
+    )
+
+
+    (when ;none blast-shot
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 1000000000) 100000000) 0)
+    (= blast-shot-int 0)
+    )
+        (+! (-> *game-info* auto-save-count) 500000000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 1000000000) 100000000) 0)
+            (-! (-> *game-info* auto-save-count) 100000000)
+        )
+        (when (= (/ (mod (-> *game-info* auto-save-count) 1000000000) 100000000) 0)
+            (+! (-> *game-info* auto-save-count) 0)
+        )
+    )
+        (set! wm-refresh #f)
+    )
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+    (when ;yellow gun rapid-fire
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 10) 1) 1)
+    (!= rapid-fire-int 1)
+    )
+    (set! rapid-fire-int 1)
+    (set! rapid-fire-option #t)
+    )
+
+    (when ;red gun rapid-fire
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 10) 1) 2)
+    (!= rapid-fire-int 2)
+    )
+    (set! rapid-fire-int 2)
+    (set! rapid-fire-option #t)
+    )
+
+    (when ;blue gun rapid-fire
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 10) 1) 3)
+    (!= rapid-fire-int 3)
+    )
+    (set! rapid-fire-int 3)
+    (set! rapid-fire-option #t)
+    )
+
+    (when ;dark gun rapid-fire
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 10) 1) 4)
+    (!= rapid-fire-int 4)
+    )
+    (set! rapid-fire-int 4)
+    (set! rapid-fire-option #t)
+    )
+
+    (when ;none gun rapid-fire
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 10) 1) 0)
+    (= rapid-fire-int 0)
+    )
+    (+! (-> *game-info* auto-save-count) 5)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 10) 1) 0)
+            (-! (-> *game-info* auto-save-count) 1)
+        )
+    )
+
+    (when ;yellow gun double-tap
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 100) 10) 1)
+    (!= double-tap-int 1)
+    )
+    (set! double-tap-int 1)
+    (set! double-tap-option #t)
+    )
+
+    (when ;red gun double-tap
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 100) 10) 2)
+    (!= double-tap-int 2)
+    )
+    (set! double-tap-int 2)
+    (set! double-tap-option #t)
+    )
+
+    (when ;blue gun double-tap
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 100) 10) 3)
+    (!= double-tap-int 3)
+    )
+    (set! double-tap-int 3)
+    (set! double-tap-option #t)
+    )
+
+    (when ;dark gun double-tap
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 100) 10) 4)
+    (!= double-tap-int 4)
+    )
+    (set! double-tap-int 4)
+    (set! double-tap-option #t)
+    )
+
+    (when ;dark gun double-tap
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 100) 10) 0)
+    (= double-tap-int 0)
+    )
+    (+! (-> *game-info* auto-save-count) 50)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 100) 10) 0)
+            (-! (-> *game-info* auto-save-count) 10)
+        )
+    )
+
+    (when ;yellow gun guard-shot
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 1000) 100) 1)
+    (!= guard-shot-int 1)
+    )
+    (set! guard-shot-int 1)
+    (set! guard-shot-option #t)
+    )
+
+    (when ;red gun guard-shot
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 1000) 100) 2)
+    (!= guard-shot-int 2)
+    )
+    (set! guard-shot-int 2)
+    (set! guard-shot-option #t)
+    )
+
+    (when ;blue gun guard-shot
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 1000) 100) 3)
+    (!= guard-shot-int 3)
+    )
+    (set! guard-shot-int 3)
+    (set! guard-shot-option #t)
+    )
+
+    (when ;dark gun guard-shot
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 1000) 100) 4)
+    (!= guard-shot-int 4)
+    )
+    (set! guard-shot-int 4)
+    (set! guard-shot-option #t)
+    )
+
+    (when ;none gun guard-shot
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 1000) 100) 0)
+    (= guard-shot-int 0)
+    )
+    (+! (-> *game-info* auto-save-count) 500)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 1000) 100) 0)
+            (-! (-> *game-info* auto-save-count) 100)
+        )
+    )
+
+    (when ;yellow gun guard-grenade
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 10000) 1000) 1)
+    (!= guard-grenade-int 1)
+    )
+    (set! guard-grenade-int 1)
+    (set! guard-grenade-option #t)
+    )
+
+    (when ;red gun guard-grenade
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 10000) 1000) 2)
+    (!= guard-grenade-int 2)
+    )
+    (set! guard-grenade-int 2)
+    (set! guard-grenade-option #t)
+    )
+
+    (when ;blue gun guard-grenade
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 10000) 1000) 3)
+    (!= guard-grenade-int 3)
+    )
+    (set! guard-grenade-int 3)
+    (set! guard-grenade-option #t)
+    )
+
+    (when ;dark gun guard-grenade
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 10000) 1000) 4)
+    (!= guard-grenade-int 4)
+    )
+    (set! guard-grenade-int 4)
+    (set! guard-grenade-option #t)
+    )
+
+    (when ;none gun guard-grenade
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 10000) 1000) 0)
+    (= guard-grenade-int 0)
+    )
+    (+! (-> *game-info* auto-save-count) 5000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 10000) 1000) 0)
+            (-! (-> *game-info* auto-save-count) 1000)
+        )
+    )
+
+    (when ;yellow gun random-shot
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 100000) 10000) 1)
+    (!= leg-random-int 1)
+    )
+    (set! leg-random-int 1)
+    (set! leg-random-shot #t)
+    )
+
+    (when ;red gun random-shot
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 100000) 10000) 2)
+    (!= leg-random-int 2)
+    )
+    (set! leg-random-int 2)
+    (set! leg-random-shot #t)
+    )
+
+    (when ;blue gun random-shot
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 100000) 10000) 3)
+    (!= leg-random-int 3)
+    )
+    (set! leg-random-int 3)
+    (set! leg-random-shot #t)
+    )
+
+    (when ;dark gun random-shot
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 100000) 10000) 4)
+    (!= leg-random-int 4)
+    )
+    (set! leg-random-int 4)
+    (set! leg-random-shot #t)
+    )
+
+    (when ;none gun random-shot
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 100000) 10000) 0)
+    (= leg-random-int 0)
+    )
+    (+! (-> *game-info* auto-save-count) 50000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 100000) 10000) 0)
+            (-! (-> *game-info* auto-save-count) 10000)
+        )
+    )
+
+    (when ;yellow gun chanced-pm-shot
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 1000000) 100000) 1)
+    (!= pm-extra-shot-int 1)
+    )
+    (set! pm-extra-shot-int 1)
+    (set! pm-extra-shot-option #t)
+    )
+
+    (when ;red gun chanced-pm-shot
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 1000000) 100000) 2)
+    (!= pm-extra-shot-int 2)
+    )
+    (set! pm-extra-shot-int 2)
+    (set! pm-extra-shot-option #t)
+    )
+
+    (when ;blue gun chanced-pm-shot
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 1000000) 100000) 3)
+    (!= pm-extra-shot-int 3)
+    )
+    (set! pm-extra-shot-int 3)
+    (set! pm-extra-shot-option #t)
+    )
+
+    (when ;dark gun chanced-pm-shot
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 1000000) 100000) 4)
+    (!= pm-extra-shot-int 4)
+    )
+    (set! pm-extra-shot-int 4)
+    (set! pm-extra-shot-option #t)
+    )
+
+    (when ;none gun chanced-pm-shot
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 1000000) 100000) 0)
+    (= pm-extra-shot-int 0)
+    )
+    (+! (-> *game-info* auto-save-count) 500000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 1000000) 100000) 0)
+            (-! (-> *game-info* auto-save-count) 100000)
+        )
+    )
+
+    (when ;yellow gun mag-bag
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 10000000) 1000000) 1)
+    (!= mag-bag-int 1)
+    )
+    (set! mag-bag-int 1)
+    (set! mag-bag-option #t)
+    )
+
+    (when ;red gun mag-bag
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 10000000) 1000000) 2)
+    (!= mag-bag-int 2)
+    )
+    (set! mag-bag-int 2)
+    (set! mag-bag-option #t)
+    )
+
+    (when ;blue gun mag-bag
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 10000000) 1000000) 3)
+    (!= mag-bag-int 3)
+    )
+    (set! mag-bag-int 3)
+    (set! mag-bag-option #t)
+    )
+
+    (when ;dark gun mag-bag
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 10000000) 1000000) 4)
+    (!= mag-bag-int 4)
+    )
+    (set! mag-bag-int 4)
+    (set! mag-bag-option #t)
+    )
+
+    (when ;none gun mag-bag
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 10000000) 1000000) 0)
+    (= mag-bag-int 0)
+    )
+    (+! (-> *game-info* auto-save-count) 5000000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 10000000) 1000000) 0)
+            (-! (-> *game-info* auto-save-count) 1000000)
+        )
+    )
+
+    (when ;yellow gun mehrunes-shot
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 100000000) 10000000) 1)
+    (!= mehrunes-shot-int 1)
+    )
+    (set! mehrunes-shot-int 1)
+    (set! mehrunes-shot-option #t)
+    )
+
+    (when ;red gun mehrunes-shot
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 100000000) 10000000) 2)
+    (!= mehrunes-shot-int 2)
+    )
+    (set! mehrunes-shot-int 2)
+    (set! mehrunes-shot-option #t)
+    )
+
+    (when ;blue gun mehrunes-shot
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 100000000) 10000000) 3)
+    (!= mehrunes-shot-int 3)
+    )
+    (set! mehrunes-shot-int 3)
+    (set! mehrunes-shot-option #t)
+    )
+
+    (when ;dark gun mehrunes-shot
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 100000000) 10000000) 4)
+    (!= mehrunes-shot-int 4)
+    )
+    (set! mehrunes-shot-int 4)
+    (set! mehrunes-shot-option #t)
+    )
+
+    (when ;none gun mehrunes-shot
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 100000000) 10000000) 0)
+    (= mehrunes-shot-int 0)
+    )
+    (+! (-> *game-info* auto-save-count) 50000000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 100000000) 10000000) 0)
+            (-! (-> *game-info* auto-save-count) 10000000)
+        )
+    )
+
+    (when ;yellow gun blast-shot
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 1000000000) 100000000) 1)
+    (!= blast-shot-int 1)
+    )
+    (set! blast-shot-int 1)
+    (set! blast-shot-option #t)
+    )
+
+    (when ;red gun blast-shot
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 1000000000) 100000000) 2)
+    (!= blast-shot-int 2)
+    )
+    (set! blast-shot-int 2)
+    (set! blast-shot-option #t)
+    )
+
+    (when ;blue gun blast-shot
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 1000000000) 100000000) 3)
+    (!= blast-shot-int 3)
+    )
+    (set! blast-shot-int 3)
+    (set! blast-shot-option #t)
+    )
+
+    (when ;dark gun blast-shot
+    (and 
+    (= (/ (mod (-> *game-info* auto-save-count) 1000000000) 100000000) 4)
+    (!= blast-shot-int 4)
+    )
+    (set! blast-shot-int 4)
+    (set! blast-shot-option #t)
+    )
+
+    (when ;dark gun blast-shot
+    (and 
+    (!= (/ (mod (-> *game-info* auto-save-count) 1000000000) 100000000) 0)
+    (= blast-shot-int 0)
+    )
+    (+! (-> *game-info* auto-save-count) 500000000)
+        (until (= (/ (mod (-> *game-info* auto-save-count) 1000000000) 100000000) 0)
+            (-! (-> *game-info* auto-save-count) 100000000)
+        )
+    )
+
+
+
+    (when *debug-segment*
+        (clear matt-str)
+        (clear *pc-encoded-matt-str*)
+        (format matt-str "<COLOR_GREEN>auto-save-count <COLOR_WHITE>= <COLOR_ORANGE>~d"
+        (-> *game-info* auto-save-count)
+        )
+        (pc-encode-utf8-string matt-str *pc-encoded-matt-str*)
+        (with-dma-buffer-add-bucket ((buf (-> (current-frame) global-buf)) (bucket-id debug-no-zbuf1))
+        ;; reset bucket settings prior to drawing - font won't do this for us, and
+        ;; draw-raw-image can sometimes mess them up. (intro sequence)
+        (dma-buffer-add-gs-set-flusha buf (alpha-1 (new 'static 'gs-alpha :b #x1 :d #x1)) (tex1-1 (new 'static 'gs-tex1 :mmag #x1 :mmin #x1)))
+        (let ((font-ctx (new 'stack 'font-context *font-default-matrix* 510 405 0.0 (font-color default) (font-flags shadow kerning large right))))
+        (set! (-> font-ctx scale) 0.325)
+        (draw-string-adv *pc-encoded-matt-str* buf font-ctx)))
+    )
+
+(none)
+)

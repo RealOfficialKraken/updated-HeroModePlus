@@ -241,6 +241,8 @@ CURRENT BUGS:
 (define auto-save-delayed? #f)
 (define auto-save-frame 0)
 
+(define wm-refresh #f)
+
 (define hell-mode-option #f) ;toggle on to set hell-mode on (just turn on hero-mode)
 
 (define weapon-mod-toggle #f) ;The option thats asked at the beginning, toggling this on will choose a random modifier for jak.

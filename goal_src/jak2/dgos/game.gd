@@ -506,4 +506,5 @@
   "dig-bomb-crate-ag.go"
   "dig-bomb-crate-cylinder-ag.go"
   "dig1-vis.go"
+  "save-def.o"
  ))
