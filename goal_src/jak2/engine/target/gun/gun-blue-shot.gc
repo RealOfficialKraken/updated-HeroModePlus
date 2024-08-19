@@ -18,23 +18,14 @@
 
 
 
-(deftype guard-shot (projectile)
+(deftype c-guard-shot (projectile)
   ((hit-actor?  symbol)
    (tail-pos    vector  :inline)
    )
   )
 
 
-
-(defpartgroup group-guard-grenade
-  :id 138
-  :duration (seconds 0.5)
-  :flags (use-local-clock)
-  :bounds (static-bspherem 0 0 0 2)
-  :parts ((sp-item 618 :fade-after (meters 200) :falloff-to (meters 200)))
-  )
-
-(deftype vehicle-grenade (projectile-bounce)
+(deftype c-vehicle-grenade (projectile-bounce)
   ((blast-radius float  :offset-assert 496)
    )
   :method-count-assert 42
@@ -43,13 +34,14 @@
   (:methods
     )
   )
-(defskelgroup skel-vehicle-grenade eco-canister eco-canister-dark-lod0-jg eco-canister-dark-idle-ja
+  #|
+(defskelgroup skel-c-vehicle-grenade eco-canister eco-canister-dark-lod0-jg eco-canister-dark-idle-ja
               ((eco-canister-dark-lod0-mg (meters 999999)))
               :bounds (static-spherem 0 0 0 0.3)
               :texture-level 6
               )
 
-(defmethod play-impact-sound vehicle-grenade ((this vehicle-grenade) (arg0 projectile-options))
+(defmethod play-impact-sound c-vehicle-grenade ((this c-vehicle-grenade) (arg0 projectile-options))
   (let ((v1-0 arg0))
     (cond
       ((zero? v1-0)
@@ -64,7 +56,7 @@
   (none)
   )
 
-  (defmethod init-proj-collision! vehicle-grenade ((this vehicle-grenade))
+  (defmethod init-proj-collision! c-vehicle-grenade ((this c-vehicle-grenade))
   "Init the [[projectile]]'s [[collide-shape]]"
   (let ((s5-0 (new 'process 'collide-shape-moving this (collide-list-enum hit-by-player))))
     (set! (-> s5-0 dynam) (copy *standard-dynamics* 'process))
@@ -90,7 +82,7 @@
     )
   (set-collide-with!
     (-> this root)
-    (collide-spec backgnd jak crate civilian enemy obstacle vehicle-sphere hit-by-others-list player-list pusher)
+    (collide-spec backgnd crate civilian enemy obstacle vehicle-sphere hit-by-others-list player-list pusher)
     )
   (set-collide-as! (-> this root) (collide-spec enemy))
   (set! (-> this root pat-ignore-mask)
@@ -99,12 +91,12 @@
   (none)
   )
 
-(defmethod init-proj-settings! vehicle-grenade ((this vehicle-grenade))
+(defmethod init-proj-settings! c-vehicle-grenade ((this c-vehicle-grenade))
   "Init relevant settings for the [[projectile]] such as gravity, speed, timeout, etc"
   (set! (-> this attack-mode) 'eco-dark)
   (initialize-skeleton
     this
-    (the-as skeleton-group (art-group-get-by-name *level* "skel-vehicle-grenade" (the-as (pointer uint32) #f)))
+    (the-as skeleton-group (art-group-get-by-name *level* "skel-c-vehicle-grenade" (the-as (pointer uint32) #f)))
     (the-as pair 0)
     )
   (let ((t9-2 (method-of-type projectile-bounce init-proj-settings!)))
@@ -118,7 +110,7 @@
   (none)
   )
 
-(defmethod spawn-impact-particles vehicle-grenade ((this vehicle-grenade))
+(defmethod spawn-impact-particles c-vehicle-grenade ((this c-vehicle-grenade))
   "Spawns associated particles with the projectile if applicable"
   (spawn (-> this part) (-> this root trans))
   (ja-post)
@@ -126,7 +118,7 @@
   (none)
   )
 
-(defmethod noop vehicle-grenade ((this vehicle-grenade))
+(defmethod noop c-vehicle-grenade ((this c-vehicle-grenade))
   "Does nothing"
   (spawn (-> this part) (-> this root trans))
   0
@@ -134,7 +126,7 @@
   )
 
 ;; WARN: Return type mismatch sound-id vs none.
-(defmethod play-impact-sound! vehicle-grenade ((this vehicle-grenade))
+(defmethod play-impact-sound! c-vehicle-grenade ((this c-vehicle-grenade))
   "Plays impact sound"
   (let* ((a2-0 (-> this root))
          (v1-0 (-> a2-0 status))
@@ -152,12 +144,12 @@
   (none)
   )
 
-(defstate impact (vehicle-grenade)
+(defstate impact (c-vehicle-grenade)
   :virtual #t
   :event (behavior ((proc process) (argc int) (message symbol) (block event-message-block))
     (case message
       (('touched)
-       (if (send-event proc 'attack (-> block param 0) (static-attack-info ((id (-> *game-info* attack-id)) (mode 'explode))))
+       (if (send-event proc 'attack (-> block param 0) (static-attack-info ((id (-> self attack-id)) (mode 'explode))))
            #t
            )
        )
@@ -170,7 +162,7 @@
       (set! (-> gp-0 radius) (-> self blast-radius))
       (set! (-> gp-0 group) (-> *part-group-id-table* 76))
       (set! (-> gp-0 collide-with)
-            (collide-spec backgnd jak crate civilian enemy obstacle vehicle-sphere hit-by-others-list player-list pusher)
+            (collide-spec backgnd crate civilian enemy obstacle vehicle-sphere hit-by-others-list player-list pusher)
             )
       (set! (-> gp-0 penetrate-using) (penetrate explode))
       (explosion-spawn self explosion gp-0)
@@ -187,11 +179,9 @@
     (deactivate self)
     )
   )
+  |#
 
   (defun someone-fire-guard-grenade ((arg0 process-drawable) (arg1 vector) (arg2 vector))
-  (when (not (logtest? (-> *game-info* secrets) (game-secrets invulnerable)))
-        (set! inv-frame-start-g #t)
-      )
   (let ((a1-9 (new 'stack-no-clear 'projectile-init-by-other-params)))
           (set! (-> a1-9 ent) (-> arg0 entity))
           (set! (-> a1-9 charge) 1.0)
@@ -208,14 +198,11 @@
             )
           (set! (-> a1-9 timeout) (seconds 4))
           (vector-normalize-copy! (-> a1-9 vel) arg2 819200.0)
-          (spawn-projectile vehicle-grenade a1-9 arg0 *default-dead-pool*)
+          (spawn-projectile c-vehicle-grenade a1-9 arg0 *default-dead-pool*)
           )
   )
 
   (defun someone-fire-guard-shot ((arg0 process-drawable) (arg1 vector) (arg2 vector))
-  (when (not (logtest? (-> *game-info* secrets) (game-secrets invulnerable)))
-        (set! inv-frame-start #t)
-      )
   (let ((s4-1 (new 'stack-no-clear 'projectile-init-by-other-params)))
             (set! (-> s4-1 ent) (-> arg0 entity))
             (set! (-> s4-1 charge) 1.0)
@@ -236,7 +223,7 @@
       (when (not (logtest? (-> *game-info* secrets) (game-secrets invulnerable)))
         (set! inv-frame-start #t)
       )
-      (spawn-projectile guard-shot s4-1 arg0 *default-dead-pool*)
+      (spawn-projectile c-guard-shot s4-1 arg0 *default-dead-pool*)
       )
   )
 
@@ -299,7 +286,7 @@
 
 
 
-(deftype turret-shot (guard-shot)
+(deftype c-turret-shot (c-guard-shot)
   ((hit-pos vector :inline :offset-assert 496)
    )
   :heap-base #x180
@@ -308,7 +295,7 @@
   :flag-assert         #x2801800200
   )
 
-  (defun guard-shot-move ((arg0 guard-shot))
+  (defun c-guard-shot-move ((arg0 c-guard-shot))
   (projectile-move-fill-line-sphere arg0)
   (let ((s5-0 (-> arg0 root)))
     (let ((s4-0 (new 'stack-no-clear 'vector)))
@@ -331,13 +318,13 @@
   (none)
   )
 
-(defmethod init-proj-settings! guard-shot ((this guard-shot))
+(defmethod init-proj-settings! c-guard-shot ((this c-guard-shot))
   "Init relevant settings for the [[projectile]] such as gravity, speed, timeout, etc"
   (set! (-> this hit-actor?) #f)
   (set! (-> this tail-pos quad) (-> this root trans quad))
   (set! (-> this attack-mode) 'guard-shot)
   (set! (-> this max-speed) 819200.0)
-  (set! (-> this move) guard-shot-move)
+  (set! (-> this move) c-guard-shot-move)
   (set! (-> this update-velocity) projectile-update-velocity-space-wars)
   (set! (-> this timeout) (seconds 0.5))
   (logior! (-> this options) (projectile-options account-for-target-velocity))

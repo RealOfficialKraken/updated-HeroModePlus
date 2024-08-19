@@ -169,7 +169,7 @@
   (when (logtest? (-> *game-info* secrets) (game-secrets hero-mode))
     (logior! (-> *game-info* secrets) (game-secrets invulnerable hero-mode)) ;this also makes it so that theres no game secrets allowed when using predator/guard shot. I could be lazy and make it for all of them
   )
-      (spawn-projectile guard-shot s4-1 (ppointer->process (-> *target* gun gun)) *default-dead-pool*)
+      (spawn-projectile c-guard-shot s4-1 (ppointer->process (-> *target* gun gun)) *default-dead-pool*)
       )
     )
       (when (and (and (= double-tap-option #t) (= double-tap-int 4) (rand-vu-percent? 0.5)))  ;double-tap

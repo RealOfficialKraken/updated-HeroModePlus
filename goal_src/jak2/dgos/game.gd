@@ -458,6 +458,7 @@
   "scene-looper.o"
   "warp-gate.o"
   "guard-projectile.o"
+  "c-guard-projectile.o"
   "metalhead-projectile.o"
   "los-control.o"
   "grunt.o"
