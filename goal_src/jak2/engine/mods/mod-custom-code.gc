@@ -6951,7 +6951,7 @@ Eco War is similar to BlackJack, but with a twist!
     (when (and (> (-> *game-info* task-deaths) 5) (<= (-> *game-info* gem) 999))
       (set! (-> *game-info* task-deaths) 0)
     )
-    (when (and (= granger1 #f)(>= (-> *game-info* gem) 1000)(= on-table? #f)(<= (-> *game-info* gem) 1499)(cpad-pressed? 0 r3)(= (-> *game-info* task-deaths) 0))
+    (when (and (= granger1 #f)(>= (-> *game-info* gem) 1000)(= on-table? #f)(cpad-pressed? 0 r3)(= (-> *game-info* task-deaths) 0))
       (set! granger1 #t)
       (set! in-granger? #t)
       (set! camera-locked #t)
