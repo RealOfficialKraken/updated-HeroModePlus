@@ -25,7 +25,7 @@ on:
       buildBinaries:
         description: "Whether to build binaries from source. Defaults to `false`, pulling binaries from `toolingRepo` instead."
         required: false
-        default: true
+        default: false
         type: "boolean"
       toolingRepo:
         description: "The repository from which the tooling is taken for the bundle. Defaults to open-goal/jak-project."
