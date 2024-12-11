@@ -238,6 +238,9 @@ CURRENT BUGS:
 (define mod-rand 0)
 (define mod-pick #f)
 
+(define granger-wait #f)
+(define in-hellmode-tpfb #f)
+
 (define auto-save-delayed? #f)
 (define auto-save-frame 0)
 

@@ -102,7 +102,45 @@ FINISHED :D
 
 
 
+  (defun camera-lock! ()
+    (set! (-> *target* cam-user-mode) 'look-around)
+    (send-event *target* 'draw #f)
+    (set-setting-by-param *setting-control* 'mode-name 'cam-eye 0 0)
+    (persist-with-delay *setting-control* 'gun (seconds 0.5) 'gun #f 0.0 0)
+    (process-grab? *target* #f)
+    (set! camera-locked #t)
+    (none)
+  )
 
+  (defun camera-unlock! ()
+    (send-event *target* 'draw #t)
+    (process-release? *target*)
+    (remove-setting-by-arg0 *setting-control* 'mode-name)
+    (set! camera-locked #f)
+    (none)
+  )
+
+  (defun start-tpfb! ()
+    (set! start-frame-count #t)
+    (set! stored-cp? #t)
+    (set! new-game-s? #t)
+    (when (= hell-mode-option #t)
+      (set! in-hellmode-tpfb #t)
+    ) 
+    (when (= (-> *progress-state* which-slot) 0)
+      (set! load-state-tp 0)
+    )
+    (when (= (-> *progress-state* which-slot) 1)
+      (set! load-state-tp 1)
+    )
+    (when (= (-> *progress-state* which-slot) 2)
+      (set! load-state-tp 2)
+    )
+    (when (= (-> *progress-state* which-slot) 3)
+      (set! load-state-tp 3)
+    )
+    (none)
+  )
 
 
 
@@ -753,7 +791,21 @@ FINISHED :D
 
 
 (when (and (= (-> *game-info* fuel) 0.0)(= weapon-mod-toggle #t)) ;checks for if you have weapon mod toggle on, then gives you a modifier
-  (set! mod-pick #t)
+  (cond
+    ((= stored-cp? #f)
+      (set! mod-pick #t)
+    )
+    (else
+      (cond
+        ((= in-hellmode-tpfb #t)
+          (set! (-> *game-info* fuel) 10.0)
+        )
+        (else
+          (set! (-> *game-info* fuel) 2.0)
+        )
+      )
+    )
+  )
 )
 
 (when (= mod-pick #t)
@@ -836,7 +888,10 @@ FINISHED :D
     (set! recieved-gm6 #t)
     (set! tp-fb #f)
   )
-  (when (and (= (-> *game-info* total-trys) 1)(= leg-random-shot #f)) ;if 1 on total-trys, legendary random shot
+  (when (and (or
+              (= (-> *game-info* buzzer-total) 1.0)
+              (= (-> *game-info* buzzer-total) 6.0)
+              )(= leg-random-shot #f)) ;if 1 on total-trys, legendary random shot
     (set! leg-random-shot #t)
     (set! recieved-gm-s5 "Random Shot!")
     (sound-play "ammo-pickup")
@@ -844,7 +899,11 @@ FINISHED :D
     (set! recieved-gm5 #t)
   )
 
-  (when (and (= (-> *game-info* buzzer-total) 2.0)(= blast-shot-option #f))
+  (when (and (or
+              (= (-> *game-info* buzzer-total) 2.0)
+              (= (-> *game-info* buzzer-total) 6.0)
+              )
+              (= blast-shot-option #f))
     (set! blast-shot-option #t)
     (set! recieved-gm-s5 "Blast Shot!")
     (sound-play "ammo-pickup")
@@ -1797,6 +1856,7 @@ FINISHED :D
     (set! start-frame-count #t)
     (set! stored-cp? #t)
     (set! new-game-s? #t)
+    (set! in-hellmode-tpfb #t)
     (when (= (-> *progress-state* which-slot) 0)
       (set! load-state-tp 0)
     )
@@ -1873,6 +1933,10 @@ FINISHED :D
 ")
   )
   (when (and (= going-back-tp #t)(= tp-fb-win #f)(> frame-count 80)(= (pause-allowed?) #t)) ;resets everything back to original state AFTER the game-load, to avoid crashes.
+    (if (= in-hellmode-tpfb #t)
+      (set! hell-mode-option #t)
+      (set! hell-mode-option #f)
+    )
     (when (= hell-mode-option #t)
       (set! (-> *game-info* fuel) 10.0)
       (set! rapid-fire-option #t)
@@ -1902,6 +1966,7 @@ FINISHED :D
     (set! going-back-tp #f)
     (set! start-frame-count #f)
     (set! pause-menu-blocked? #f)
+    (set! in-hellmode-tpfb #f)
     (set! frame-count 0)
   )
 
@@ -1926,7 +1991,7 @@ FINISHED :D
       (set! pickup-save #f)
       (set! pickup-frame 0)
       (set! auto-save-delayed? #t)
-      (when (= hell-mode-option #f)
+      (when (= in-hellmode-tpfb #f)
         (print "[MOD] | LEGENDARY | You beat tp-fb on normal and recieved Weapon Mod pm-extra-shot! tp-fb is now disabled, rerolling modifier.
 ")
         (set! (-> *game-info* buzzer-total) 1.0)
@@ -1934,19 +1999,20 @@ FINISHED :D
         (set! mod-pick #t)
         (set! popup-tpfb-n #t)
       )
-      (when (= hell-mode-option #t)
+      (when (= in-hellmode-tpfb #t)
         (set! (-> *game-info* fuel) 10.0)
         (+! (-> *game-info* gem) 30.0)
-        (print "[MOD] | LEGENDARY | You beat tp-fb in hero mode! Congratulations!! You recieved Weapon Mod blast shot! tp-fb is now disabled.
+        (print "[MOD] | LEGENDARY | You beat tp-fb in HELL MODE! Congratulations!! You recieved Weapon Mods Blast Shot, and Peacemaker Shot! tp-fb is now disabled.
 ")
         (set! hell-mode-option #f)
-        (set! (-> *game-info* buzzer-total) 2.0)
+        (set! (-> *game-info* buzzer-total) 6.0)
         (set! popup-tpfb-h #t)
         (set! rapid-fire-option #t)
         (set! double-tap-option #t)
         (set! guard-shot-option #t)
         (set! guard-grenade-option #t)
       )
+      (set! in-hellmode-tpfb #f)
     )
   )
 
@@ -4810,21 +4876,7 @@ Eco War is similar to BlackJack, but with a twist!
 )
 
 
-(when (= camera-locked #t) ;lock camera
-  (set! (-> *target* cam-user-mode) 'look-around)
-  (send-event *target* 'draw #f)
-  (set-setting-by-param *setting-control* 'mode-name 'cam-eye 0 0)
-  (persist-with-delay *setting-control* 'gun (seconds 0.5) 'gun #f 0.0 0)
-  (process-grab? *target* #f)
-  (set! camera-locked #f)
-)
 
-(when (= camera-unlocked #t) ;unlock camera
-  (send-event *target* 'draw #t)
-  (process-release? *target*)
-  (remove-setting-by-arg0 *setting-control* 'mode-name)
-  (set! camera-unlocked #f)
-)
 
 
 
@@ -4849,6 +4901,7 @@ Eco War is similar to BlackJack, but with a twist!
     (set! wait-frame 0)
     (set! weapon-id 0)
     (send-event *target* 'draw #t)
+    (camera-unlock!)
     (process-release? *target*)
   )
 )
@@ -4861,6 +4914,9 @@ Eco War is similar to BlackJack, but with a twist!
   (when (and (= weapon-mod-toggle #t)(!= (-> (level-get-target-inside *level*) name) 'hiphog)(= in-granger? #f)(= in-menu #f)(= (paused?) #f)(cpad-pressed? 0 r3)) ;startup virtual menu
     (set! menu-activate #t)
     (set! in-menu #t)
+    (when (= (-> (level-get-target-inside *level*) name) 'consiteb)
+      (set! granger-wait #t)
+    )
     (set! sub-menu-slot 0)
     (set! menu-pressed? #f)
     (set! string-printed? #t)
@@ -4873,7 +4929,7 @@ Eco War is similar to BlackJack, but with a twist!
   TRIANGLE: Exit Menu
   LEFT/RIGHT: Browse
   ")
-  (set! camera-locked #t)
+  (camera-lock!)
   )
 )
 
@@ -6809,7 +6865,7 @@ Eco War is similar to BlackJack, but with a twist!
       (set! granger4 #t)
     )
 
-(when (and (= camera-locked #t)(= hint-done? #f)(= (-> *game-info* task-deaths) 0)(= (-> (level-get-target-inside *level*) name) 'consiteb))
+(when (and (= granger-wait #t)(= hint-done? #f)(= (-> *game-info* task-deaths) 0)(= (-> (level-get-target-inside *level*) name) 'consiteb))
     (set! pregranger1 #t)
     (+! preranger1i 1)
     (when (= preranger1i 120)
@@ -6819,7 +6875,7 @@ Eco War is similar to BlackJack, but with a twist!
     (when (= in-menu #t)
       (set! in-menu #f)
       (set! menu-pressed? #f)
-      (set! wait-start #t)
+      ;(set! wait-start #t)
       (set! string-printed? #f)
     )
 
@@ -6875,6 +6931,8 @@ Eco War is similar to BlackJack, but with a twist!
       (set! wait-start #t)
       (set! pause-menu-blocked? #f)
       (set! string-printed? #f)
+      (set! granger-wait #f)
+      (camera-unlock!)
     )
 
 
@@ -6951,14 +7009,14 @@ Eco War is similar to BlackJack, but with a twist!
     (when (and (> (-> *game-info* task-deaths) 5) (<= (-> *game-info* gem) 999))
       (set! (-> *game-info* task-deaths) 0)
     )
-    (when (and (= granger1 #f)(>= (-> *game-info* gem) 1000)(= on-table? #f)(cpad-pressed? 0 r3)(= (-> *game-info* task-deaths) 0))
+    (when (and (= granger1 #f)(>= (-> *game-info* gem) 1000)(<= (-> *game-info* gem) 1499)(= on-table? #f)(cpad-pressed? 0 r3)(= (-> *game-info* task-deaths) 0))
       (set! granger1 #t)
       (set! in-granger? #t)
-      (set! camera-locked #t)
+      (camera-lock!)
       (when (= in-menu #t)
     (set! in-menu #f)
     (set! menu-pressed? #f)
-    (set! wait-start #t)
+    ;(set! wait-start #t)
     (set! string-printed? #f)
       )
     )
@@ -6966,11 +7024,11 @@ Eco War is similar to BlackJack, but with a twist!
     (when (and (= granger2 #f)(>= (-> *game-info* gem) 1500)(= on-table? #f)(<= (-> *game-info* gem) 2499)(cpad-pressed? 0 r3)(= (-> *game-info* task-deaths) 1))
       (set! granger2 #t)
       (set! in-granger? #t)
-      (set! camera-locked #t)
+      (camera-lock!)
       (when (= in-menu #t)
     (set! in-menu #f)
     (set! menu-pressed? #f)
-    (set! wait-start #t)
+    ;(set! wait-start #t)
     (set! string-printed? #f)
       )
     )
@@ -6978,11 +7036,11 @@ Eco War is similar to BlackJack, but with a twist!
     (when (and (= granger3 #f)(>= (-> *game-info* gem) 2500)(= on-table? #f)(<= (-> *game-info* gem) 99998)(cpad-pressed? 0 r3)(= (-> *game-info* task-deaths) 2))
       (set! granger3 #t)
       (set! in-granger? #t)
-      (set! camera-locked #t)
+      (camera-lock!)
       (when (= in-menu #t)
     (set! in-menu #f)
     (set! menu-pressed? #f)
-    (set! wait-start #t)
+    ;(set! wait-start #t)
     (set! string-printed? #f)
       )
     )
@@ -6990,11 +7048,11 @@ Eco War is similar to BlackJack, but with a twist!
     (when (and (= granger4 #f)(= on-table? #f)(>= (-> *game-info* gem) 99999)(cpad-pressed? 0 r3)(= (-> *game-info* task-deaths) 3))
       (set! granger4 #t)
       (set! in-granger? #t)
-      (set! camera-locked #t)
+      (camera-lock!)
       (when (= in-menu #t)
     (set! in-menu #f)
     (set! menu-pressed? #f)
-    (set! wait-start #t)
+    ;(set! wait-start #t)
     (set! string-printed? #f)
       )
     )
@@ -7121,6 +7179,7 @@ Eco War is similar to BlackJack, but with a twist!
       (set! string-printed? #f)
       (set! in-granger? #f)
       (set! auto-save-delayed? #t)
+      (camera-unlock!)
     )
   )
 
@@ -7227,6 +7286,7 @@ Eco War is similar to BlackJack, but with a twist!
       (set! string-printed? #f)
       (set! in-granger? #f)
       (set! auto-save-delayed? #t)
+      (camera-unlock!)
     )
   )
 
@@ -7383,6 +7443,7 @@ Eco War is similar to BlackJack, but with a twist!
       (set! string-printed? #f)
       (set! in-granger? #f)
       (set! auto-save-delayed? #t)
+      (camera-unlock!)
     )
   )
 
@@ -7579,6 +7640,7 @@ Eco War is similar to BlackJack, but with a twist!
       (set! in-granger? #f)
       (set! gem-takeaway #t)
       (set! auto-save-delayed? #t)
+      (camera-unlock!)
     )
   )
 
