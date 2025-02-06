@@ -343,7 +343,7 @@
   "pckernel.o" ;; added
   "subtitle2-h.o" ;; added
   "subtitle2.o" ;; added
-  "input-display.o" ;;added
+  "input-display.o" ;;added ;;mod-base-change
   "main.o"
   "collide-cache.o"
   "collide-debug.o"
@@ -496,15 +496,5 @@
   "dig-texture.o"
   "dig-scenes.o"
   "dig-part.o"
-  "tpage-2282.go"
-  "tpage-2284.go"
-  "tpage-2283.go"
-  "tpage-2419.go"
-  "tpage-2844.go"
-  "dig-digger-ag.go"
-  "crimson-guard-ag.go"
-  "dig-bomb-crate-ag.go"
-  "dig-bomb-crate-cylinder-ag.go"
-  "dig1-vis.go"
   "save-def.o"
  ))

@@ -139,7 +139,7 @@
     (progress-cheats-weather-bad           weather-bad           #t           fortress-escape-resolution  :skill 85)
     (progress-cheats-weather-good          weather-good          #t           fortress-escape-resolution  :skill 85)
     ;(progress-cheats-suck-in-all           suck-in-all           #t           forest-scouts-get-board     :unlock (progress-cheats-suck-in-all-unlock pc-cheat-suck-in-all-unlock))
-    (progress-cheats-turbo-board           turbo-board           #t           fortress-escape-introduction :skill 0)
+    (progress-cheats-turbo-board           turbo-board           #t           fortress-escape-introduction)
     ;(progress-cheats-fast-travel           fast-travel           auto         city-defend-stadium-introduction  :unlock (progress-cheats-fast-travel-unlock pc-cheat-fast-travel-unlock))
     ;(progress-cheats-orb-tracker           orb-tracker           auto         nest-boss-resolution)
     (progress-cheats-no-textures           no-textures           #t           nest-boss-resolution      :skill 115)
@@ -266,10 +266,10 @@
     (.lvf vf1 (&-> a quad))
     (.lvf vf2 (&-> b quad))
     (.mov vf4 alpha)
-    (.add.x.vf vf3 vf1 vf0 :mask #b1000)
+    (.add.x.vf.w vf3 vf1 vf0)
     (.sub.vf vf2 vf2 vf1)
     (.mul.x.vf vf2 vf2 vf4)
-    (.add.vf vf3 vf1 vf2 :mask #b111)
+    (.add.vf.xyz vf3 vf1 vf2)
     (.svf (&-> dest quad) vf3)
     dest
     )
@@ -283,7 +283,7 @@
     (init-vf0-vector)
     (.lvf dest-vf (&-> dest quad))
     (.lvf src-vf (&-> src quad))
-    (.add.vf dest-vf vf0 src-vf :mask #b111)
+    (.add.vf.xyz dest-vf vf0 src-vf)
     (.svf (&-> dest quad) dest-vf)
     dest
     )
@@ -322,6 +322,7 @@
   (set! (-> *setting-control* user-default music-volume) (-> obj memcard-volume-music))
   (set! (-> *setting-control* user-default dialog-volume) (-> obj memcard-volume-dialog))
   (set! (-> *setting-control* user-default vibration) (-> obj memcard-vibration?))
+  (set! (-> *setting-control* user-default subtitle) (-> obj memcard-subtitles?))
   obj)
 
 (defmethod set-game-setting! ((obj pc-settings-jak2) (setting symbol) (value symbol))
@@ -619,16 +620,17 @@
 
   ;; turbo jet board cheat
   (cond
-    ((and (pc-cheats? (-> obj cheats) turbo-board))
+    ((and (pc-cheats? (-> obj cheats) turbo-board)
+          *target*
+          (focus-test? *target* board)
+          (inside-city?))
       (set-setting! 'string-spline-max-move 'abs (* (-> *pc-cheat-state* turbo-board-speed) (meters 2)) 0)
       (set-setting! 'string-spline-accel 'abs (* (-> *pc-cheat-state* turbo-board-speed) (meters 0.045)) 0)
       (set-setting! 'string-spline-max-move-player 'abs (* (-> *pc-cheat-state* turbo-board-speed) (meters 1.5)) 0)
       (set-setting! 'string-spline-accel-player 'abs (* (-> *pc-cheat-state* turbo-board-speed) (meters 0.035)) 0)
       (set-cheat-state-flag! turbo-board)
-      (set! mushroom-movies #t)
       )
     (else
-      (set! mushroom-movies #f)
       (remove-setting! 'string-spline-max-move)
       (remove-setting! 'string-spline-accel)
       (remove-setting! 'string-spline-max-move-player)
@@ -766,6 +768,7 @@
     (("cheats-unlocked") (set! (-> obj cheats-unlocked) (the-as pc-cheats (file-stream-read-int file))))
     (("cheats-backup") (file-stream-read-int file)) ;; TODO - Don't remove this, parsing code can't handle unexpected keys
     (("memcard-subtitles?") (set! (-> obj memcard-subtitles?) (file-stream-read-symbol file)))
+    (("hint-subtitles?") (file-stream-read-symbol file))
     (("music-unlocked")
       (dotimes (i (/ (align64 (-> obj music-unlocked length)) 64))
         (bit-array<-int64 (-> obj music-unlocked) (* i 64) (file-stream-read-int file))
@@ -818,6 +821,7 @@
   (format file "  (cheats-purchased #x~x)~%" (-> obj cheats-purchased))
   (format file "  (cheats-unlocked #x~x)~%" (-> obj cheats-unlocked))
   (format file "  (memcard-subtitles? ~A)~%" (-> obj memcard-subtitles?))
+  (format file "  (hint-subtitles? ~A)~%" (-> obj hint-subtitles?))
 
   (format file "  (music-unlocked")
   (dotimes (i (/ (align64 (-> obj music-unlocked length)) 64))

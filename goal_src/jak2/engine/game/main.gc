@@ -7,7 +7,6 @@
 
 ;; DECOMP BEGINS
 (defun-extern runs-every-frame (none))
-(defun-extern stat-checker! (none))
 
 (defun set-letterbox-frames ((arg0 time-frame))
   "Set the remaining time until letterboxing is removed.
@@ -331,9 +330,9 @@
       (.lvf vf1 (&-> this color-dest quad))
       (.lvf vf2 (&-> this color quad))
       (.sub.vf vf3 vf1 vf2)
-      (.add.x.vf vf4 vf4 vf4 :mask #b10)
-      (.min.w.vf vf4 vf4 vf0 :mask #b10)
-      (.max.y.vf vf4 vf4 vf0 :mask #b10)
+      (.add.x.vf.y vf4 vf4 vf4)
+      (.min.w.vf.y vf4 vf4 vf0)
+      (.max.y.vf.y vf4 vf4 vf0)
       (.mul.y.vf vf3 vf3 vf4)
       (.add.vf vf1 vf2 vf3)
       (.svf (&-> this extra quad) vf4)
@@ -868,7 +867,6 @@
         (load-continue (-> *level* loading-level))
         )
     (runs-every-frame) ;;mod-base-change
-    (stat-checker!)
 
     ; ;; Run blerc to modify foreground models
     (with-profiler 'merc *profile-merc-color*
