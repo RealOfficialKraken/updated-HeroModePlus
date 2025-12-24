@@ -2278,6 +2278,7 @@
           )
         )
       (360
+        (set! mm-hint-1 #t)
         (apply
           ,(lambda :behavior scene-player
              ()

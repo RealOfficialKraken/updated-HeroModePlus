@@ -180,7 +180,103 @@ FINISHED :D
 
 
 
+(when (= mm-hint-1 #t)
+    (+! mm-hint-1i 1)
+    (when (not *scene-player*)
+        (set! mm-hint-1 #f)
+        (set! mm-hint-1i 0)
+    )
+    (clear matt-str)
+        (clear *pc-encoded-matt-str*)
+        (format matt-str "<COLOR_WHITE>Press <COLOR_RED>O<COLOR_WHITE> to toggle <COLOR_CYAN>Mushroom Movies<COLOR_WHITE>!"
+        )
+        (pc-encode-utf8-string matt-str *pc-encoded-matt-str*)
+        (with-dma-buffer-add-bucket ((buf (-> (current-frame) global-buf)) (bucket-id debug-no-zbuf1))
+        (dma-buffer-add-gs-set-flusha buf (alpha-1 (new 'static 'gs-alpha :b #x1 :d #x1)) (tex1-1 (new 'static 'gs-tex1 :mmag #x1 :mmin #x1)))
+        (let ((font-ctx (new 'stack 'font-context *font-default-matrix* 255 35 0.0 (font-color default) (font-flags middle shadow kerning large))))
+        (set! (-> font-ctx scale) 0.525)
+        (draw-string-adv *pc-encoded-matt-str* buf font-ctx)))
+        (when (= mm-hint-1i 500)
+            (set! mm-hint-1i 0)
+            (set! mm-hint-1 #f)
+        )
+)
 
+(when
+    (and
+        *scene-player*
+        (cpad-pressed? 0 circle)
+    )
+    (cond
+        ((= mushroom-movies #t)
+            (set! mushroom-movies #f)
+        )
+        (else
+            (set! mushroom-movies #t)
+        )
+    )
+    (set! mm-hint #t)
+    (set! mm-hinti 0)
+)
+
+(when
+    (and
+        *scene-player*
+        (= mm-hint #t)
+    )
+    (+! mm-hinti 1)
+    (when (= mm-hint-1 #t)
+        (set! mm-hint-1i 0)
+        (set! mm-hint-1 #f)
+    )
+    (when (or
+            (and (> mm-hinti 0) (< mm-hinti 50))
+            (and (> mm-hinti 55) (< mm-hinti 105))
+          )
+        (cond
+            ((= mushroom-movies #t)
+                (clear matt-str)
+                (clear *pc-encoded-matt-str*)
+                (format matt-str "<COLOR_CYAN>Mushroom Movies<COLOR_GREEN> Enabled"
+                )
+                (pc-encode-utf8-string matt-str *pc-encoded-matt-str*)
+                (with-dma-buffer-add-bucket ((buf (-> (current-frame) global-buf)) (bucket-id debug-no-zbuf1))
+                (dma-buffer-add-gs-set-flusha buf (alpha-1 (new 'static 'gs-alpha :b #x1 :d #x1)) (tex1-1 (new 'static 'gs-tex1 :mmag #x1 :mmin #x1)))
+                (let ((font-ctx (new 'stack 'font-context *font-default-matrix* 255 35 0.0 (font-color default) (font-flags middle shadow kerning large))))
+                (set! (-> font-ctx scale) 0.475)
+                (draw-string-adv *pc-encoded-matt-str* buf font-ctx)))
+            )
+            (else
+                (clear matt-str)
+                (clear *pc-encoded-matt-str*)
+                (format matt-str "<COLOR_CYAN>Mushroom Movies<COLOR_RED> Disabled"
+                )
+                (pc-encode-utf8-string matt-str *pc-encoded-matt-str*)
+                (with-dma-buffer-add-bucket ((buf (-> (current-frame) global-buf)) (bucket-id debug-no-zbuf1))
+                (dma-buffer-add-gs-set-flusha buf (alpha-1 (new 'static 'gs-alpha :b #x1 :d #x1)) (tex1-1 (new 'static 'gs-tex1 :mmag #x1 :mmin #x1)))
+                (let ((font-ctx (new 'stack 'font-context *font-default-matrix* 255 35 0.0 (font-color default) (font-flags middle shadow kerning large))))
+                (set! (-> font-ctx scale) 0.475)
+                (draw-string-adv *pc-encoded-matt-str* buf font-ctx)))
+            )
+        )
+    )
+    (when (>= mm-hinti 105)
+        (set! mm-hinti 0)
+        (set! mm-hint #f)
+    )
+)
+
+(when
+    (and
+        (not *scene-player*)
+        (or
+            (= mm-hint #t)
+            (> mm-hinti 0)
+        )
+    )
+    (set! mm-hint #f)
+    (set! mm-hinti 0)
+)
 
 
 ;new game for granger but in progress!
@@ -6161,13 +6257,13 @@ Eco War is similar to BlackJack, but with a twist!
     ~%<COLOR_BLUE>  Made by Kraken
     ~%
     ~%
-    <COLOR_WHITE>~%Everything in the game is out to get you.
-    ~%You can gain an edge by enabling weapon mods for you to acquire and find,
-    ~%but in doing so, you also enable a random modifier.
+    <COLOR_WHITE>~%A normal playthrough is just like HeroMode + JetBOARD!
+    ~%<COLOR_CYAN>But there's a huge twist:
+    ~%<COLOR_WHITE>You can enable Gun Mods, but you'll also get a modifier.
     ~%All modifiers have a give and a take, left vague on purpose to figure out for yourselves.
-    ~%<COLOR_WHITE>This was made for difficulty's purposes. <COLOR_RED>Weapon mods make the game harder!
-    ~%<COLOR_WHITE>You will get a list of all modifiers in a Hero mode save.
-    ~%Speaking of, Hero Mode is fully playable and features exclusive content! <COLOR_RED>Only for the worthy.
+    ~%<COLOR_WHITE>
+    ~%<COLOR_WHITE>Playing Hero Mode in HeroMode+ turns the game into <COLOR_RED>HellMode<COLOR_WHITE>.
+    ~% <COLOR_RED>Only for the worthy.
     ~%
     ~%<COLOR_YELLOW>Would you like to enable Weapon Mods?
     ~%(hint: this option is only asked once per save)
@@ -6190,13 +6286,13 @@ Eco War is similar to BlackJack, but with a twist!
     ~%<COLOR_BLUE>  Made by Kraken
     ~%
     ~%
-    <COLOR_WHITE>~%Everything in the game is out to get you.
-    ~%You can gain an edge by enabling weapon mods for you to acquire and find,
-    ~%but in doing so, you also enable a random modifier.
+    <COLOR_WHITE>~%A normal playthrough is just like HeroMode + JetBOARD!
+    ~%<COLOR_CYAN>But there's a huge twist:
+    ~%<COLOR_WHITE>You can enable Gun Mods, but you'll also get a modifier.
     ~%All modifiers have a give and a take, left vague on purpose to figure out for yourselves.
-    ~%<COLOR_WHITE>This was made for difficulty's purposes. <COLOR_RED>Weapon mods make the game harder!
-    ~%<COLOR_WHITE>You will get a list of all modifiers in a Hero mode save.
-    ~%Speaking of, Hero Mode is fully playable and features exclusive content! <COLOR_RED>Only for the worthy.
+    ~%<COLOR_WHITE>
+    ~%<COLOR_WHITE>Playing Hero Mode in HeroMode+ turns the game into <COLOR_RED>HellMode<COLOR_WHITE>.
+    ~% <COLOR_RED>Only for the worthy.
     ~%
     ~%<COLOR_YELLOW>Would you like to enable Weapon Mods?
     ~%(hint: this option is only asked once per save)

@@ -388,10 +388,15 @@ CURRENT BUGS:
 (define di-i 0)
 
 (define mushroom-movies #f)
+(define mushroom-handshake #f)
 (define mushie-unlocked? #f)
 (define movie-int 0)
 (define mushroom-movies-start #f)
 (define mushroom-var 0)
+(define mm-hint-1 #f)
+(define mm-hint-1i 0)
+(define mm-hinti 0)
+(define mm-hint #f)
 
 (define pickup-save #f)
 (define pickup-frame 0)
