@@ -149,13 +149,13 @@
                   (get-intersect-point s2-0 s1-0 (-> this root) (the-as touching-shapes-entry arg1))
                   )
               (cond
-                ((logtest? (-> *part-group-id-table* 77 flags) (sp-group-flag sp13))
+                ((logtest? (-> group-darkjak-smack-hit flags) (sp-group-flag sp13))
                  (vector-copy! (-> *launch-matrix* trans) s2-0)
-                 (part-tracker-spawn part-tracker-subsampler :to this :group (-> *part-group-id-table* 77))
+                 (part-tracker-spawn part-tracker-subsampler :to this :group group-darkjak-smack-hit)
                  )
                 (else
                   (vector-copy! (-> *launch-matrix* trans) s2-0)
-                  (part-tracker-spawn part-tracker :to this :group (-> *part-group-id-table* 77))
+                  (part-tracker-spawn part-tracker :to this :group group-darkjak-smack-hit)
                   )
                 )
               (sound-play "djak-strike-ko")
@@ -288,13 +288,13 @@
 (defmethod projectile-method-26 ((this darkjak-ball))
   (sound-play "djak-strike-hit")
   (cond
-    ((logtest? (-> *part-group-id-table* 76 flags) (sp-group-flag sp13))
+    ((logtest? (-> group-darkjak-smack-wall-explode flags) (sp-group-flag sp13))
      (vector-copy! (-> *launch-matrix* trans) (-> this root trans))
-     (part-tracker-spawn part-tracker-subsampler :to this :group (-> *part-group-id-table* 76))
+     (part-tracker-spawn part-tracker-subsampler :to this :group group-darkjak-smack-wall-explode)
      )
     (else
       (vector-copy! (-> *launch-matrix* trans) (-> this root trans))
-      (part-tracker-spawn part-tracker :to this :group (-> *part-group-id-table* 76))
+      (part-tracker-spawn part-tracker :to this :group group-darkjak-smack-wall-explode)
       )
     )
   (activate! *camera-smush-control* 819.2 15 75 1.0 0.9 (-> *display* camera-clock))
@@ -461,9 +461,9 @@
   (set! (-> this vehicle-damage-factor) 2.0)
   (set! (-> this vehicle-impulse-factor) 3.0)
   (logior! (-> this options) (projectile-options po13))
-  (set! (-> this part) (create-launch-control (-> *part-group-id-table* 172) this))
-  (set! (-> this ball1) (create-launch-control (-> *part-group-id-table* 172) this))
-  (set! (-> this trail) (create-launch-control (-> *part-group-id-table* 173) this))
+  (set! (-> this part) (create-launch-control group-darkjak-hadouken this))
+  (set! (-> this ball1) (create-launch-control group-darkjak-hadouken this))
+  (set! (-> this trail) (create-launch-control group-darkjak-hadouken-trail this))
   (set! (-> this impact?) #f)
   (set! (-> this max-hits) 1000)
   (vector-copy! (-> this fire-point) (-> this root trans))
@@ -1426,7 +1426,7 @@
            (the-as (pointer int64) (& sv-40))
            )
           )
-      (compute-alignment! (-> self align))
+      (compute-delta-align! (-> self align))
       (when (not (ja-min? 0))
         (cond
           ((and (>= (ja-frame-num 0) 20.0)
@@ -1447,12 +1447,7 @@
                   )
                 (send-event (handle->process (-> self control unknown-combo-tracker00 target)) 'combo)
                 )
-           (let* ((s5-0 (handle->process (-> self control unknown-combo-tracker00 target)))
-                  (gp-0 (if (type? s5-0 process-focusable)
-                            s5-0
-                            )
-                        )
-                  )
+           (let ((gp-0 (as-type (handle->process (-> self control unknown-combo-tracker00 target)) process-focusable)))
              (let ((s5-1 (get-trans (the-as process-focusable gp-0) 3)))
                (when (and (< 2048.0 (vector-vector-distance (-> self control trans) s5-1))
                           (or (and (= gp-0 (handle->process sv-56)) (not (time-elapsed? (the-as time-frame sv-64) (seconds 0.1))))
@@ -1579,13 +1574,13 @@
                      )
             (when (= (-> gp-3 best-other-tri pat mode) (pat-mode wall))
               (cond
-                ((logtest? (-> *part-group-id-table* 12 flags) (sp-group-flag sp13))
+                ((logtest? (-> group-punch-hit flags) (sp-group-flag sp13))
                  (vector-copy! (-> *launch-matrix* trans) (-> gp-3 best-other-tri intersect))
-                 (part-tracker-spawn part-tracker-subsampler :to self :group (-> *part-group-id-table* 12))
+                 (part-tracker-spawn part-tracker-subsampler :to self :group group-punch-hit)
                  )
                 (else
                   (vector-copy! (-> *launch-matrix* trans) (-> gp-3 best-other-tri intersect))
-                  (part-tracker-spawn part-tracker :to self :group (-> *part-group-id-table* 12))
+                  (part-tracker-spawn part-tracker :to self :group group-punch-hit)
                   )
                 )
               (let ((name (static-sound-name "djak-punch-hit")))
@@ -1721,11 +1716,11 @@
           (when v1-46
             (set! (-> self control unknown-sound-id00) (sound-play "djak-bolt-charg"))
             (set! (-> self darkjak charge-effect)
-                  (ppointer->handle (if (logtest? (-> *part-group-id-table* 75 flags) (sp-group-flag sp13))
+                  (ppointer->handle (if (logtest? (-> group-darkjak-smack-charge flags) (sp-group-flag sp13))
                                         (part-tracker-spawn
                                           part-tracker-subsampler
                                           :to self
-                                          :group (-> *part-group-id-table* 75)
+                                          :group group-darkjak-smack-charge
                                           :duration -1
                                           :target self
                                           :mat-joint 59
@@ -1733,7 +1728,7 @@
                                         (part-tracker-spawn
                                           part-tracker
                                           :to self
-                                          :group (-> *part-group-id-table* 75)
+                                          :group group-darkjak-smack-charge
                                           :duration -1
                                           :target self
                                           :mat-joint 59
@@ -2071,7 +2066,7 @@
     (set-setting! 'ambient-volume 'rel 0.0 0)
     (ja-no-eval :group! (-> self draw art-group data 466) :num! (seek!) :frame-num 0.0)
     (until (ja-done? 0)
-      (compute-alignment! (-> self align))
+      (compute-delta-align! (-> self align))
       (align! (-> self align) (align-opts adjust-y-vel) 1.0 1.0 1.0)
       (set! (-> self alt-cam-pos x) (-> self control trans x))
       (set! (-> self alt-cam-pos z) (-> self control trans z))
@@ -2187,13 +2182,13 @@
           )
     (set! (-> sv-160 y) (-> self control root-prim prim-core world-sphere y))
     (cond
-      ((logtest? (-> *part-group-id-table* 71 flags) (sp-group-flag sp13))
+      ((logtest? (-> group-darkjak-bomb flags) (sp-group-flag sp13))
        (vector-copy! (-> *launch-matrix* trans) sv-160)
-       (part-tracker-spawn part-tracker-subsampler :to *entity-pool* :group (-> *part-group-id-table* 71))
+       (part-tracker-spawn part-tracker-subsampler :to *entity-pool* :group group-darkjak-bomb)
        )
       (else
         (vector-copy! (-> *launch-matrix* trans) sv-160)
-        (part-tracker-spawn part-tracker :to *entity-pool* :group (-> *part-group-id-table* 71))
+        (part-tracker-spawn part-tracker :to *entity-pool* :group group-darkjak-bomb)
         )
       )
     (let ((gp-6 (process-spawn
@@ -2420,7 +2415,7 @@
     (set! (-> self neck flex-blend) 0.0)
     (set-setting! 'music-volume 'rel 0.0 0)
     (set-setting! 'ambient-volume 'rel 0.0 0)
-    (compute-alignment! (-> self align))
+    (compute-delta-align! (-> self align))
     (set-action!
       *gui-control*
       (gui-action play)
@@ -2435,7 +2430,7 @@
       (ja-no-eval :num! (seek! max f0-1))
       )
     (while (not (ja-done? 0))
-      (compute-alignment! (-> self align))
+      (compute-delta-align! (-> self align))
       (set! (-> self control turn-go-the-long-way) 1.0)
       (set! (-> self darkjak clock-vel) -4.0)
       (set! (-> self darkjak clock-on) #t)
@@ -2457,12 +2452,7 @@
       (set! sv-120 (fill-actor-list-for-box *actor-hash* sv-128 (-> sv-112 data) (-> sv-112 allocated-length)))
       (set! (-> sv-112 length) sv-120)
       (countdown (s5-0 sv-120)
-        (let* ((s4-0 (-> sv-112 s5-0 process))
-               (v1-56 (if (type? s4-0 process-focusable)
-                          s4-0
-                          )
-                      )
-               )
+        (let ((v1-56 (as-type (-> sv-112 s5-0 process) process-focusable)))
           (when (and v1-56 (logtest? (process-mask crate enemy guard vehicle) (-> v1-56 mask)))
             (set! (-> sv-132 (-> sv-132 length)) (process->handle v1-56))
             (+! (-> sv-132 length) 1)
@@ -2561,7 +2551,7 @@
     (ja-no-eval :group! (-> self draw art-group data 471) :num! (seek!) :frame-num 0.0)
     (until (ja-done? 0)
       (ja-blend-eval)
-      (compute-alignment! (-> self align))
+      (compute-delta-align! (-> self align))
       (set! (-> self control turn-go-the-long-way) 1.0)
       (set! (-> self darkjak clock-vel) 4.0)
       (suspend)

@@ -497,4 +497,5 @@
   "dig-scenes.o"
   "dig-part.o"
   "save-def.o"
+  "target-explode-grenade.o"
  ))

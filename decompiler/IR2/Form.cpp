@@ -1890,8 +1890,12 @@ std::string fixed_operator_to_string(FixedOperatorKind kind) {
       return "mouse-hold?";
     case FixedOperatorKind::VECTOR_LENGTH:
       return "vector-length";
+    case FixedOperatorKind::VECTOR_LENGTH_SQUARED:
+      return "vector-length-squared";
     case FixedOperatorKind::VECTOR_PLUS_FLOAT_TIMES:
       return "vector+float*!";
+    case FixedOperatorKind::VECTOR_PLUS_TIMES:
+      return "vector+*!";
     case FixedOperatorKind::FOCUS_TEST:
       return "focus-test?";
     default:
@@ -3272,6 +3276,7 @@ goos::Object DefskelgroupElement::to_form_internal(const Env& env) const {
       }
       break;
     case GameVersion::Jak3:
+    case GameVersion::JakX:
       if (m_static_info.version != 8) {
         forms.push_back(pretty_print::to_symbol(fmt::format(":version {}", m_static_info.version)));
       }

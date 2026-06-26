@@ -265,6 +265,23 @@ level_tools::BspHeader extract_bsp_from_level(const ObjectFileDB& db,
  * Even though GAME.CGO isn't technically a level, the decompiler/loader treat it like one,
  * but the bsp stuff is just empty. It will contain only textures/art groups.
  */
+
+void extract_single_ag(const std::string& dgo_name,
+                       const std::string& ag_name,
+                       const ObjectFileDB& db,
+                       const TextureDB& tex_db,
+                       tfrag3::Level& lvl) {
+  auto dgo = db.obj_files_by_dgo.at(dgo_name);
+  for (const auto& file : dgo) {
+    if (file.name == ag_name) {
+      const auto& ag_file = db.lookup_record(file);
+      MercSwapInfo swapped_info;
+      extract_merc(ag_file, tex_db, db.dts, extract_tex_remap(db, dgo_name), lvl, false,
+                   db.version(), swapped_info);
+    }
+  }
+}
+
 void extract_common(const ObjectFileDB& db,
                     const TextureDB& tex_db,
                     const std::string& dgo_name,
@@ -290,6 +307,9 @@ void extract_common(const ObjectFileDB& db,
 
   add_all_textures_from_level(tfrag_level, "ARTSPOOL", tex_db);
   extract_art_groups_from_level(db, tex_db, {}, "ARTSPOOL", tfrag_level, art_group_data);
+
+  extract_single_ag("STR.DGO", "plasmitebomb-ag", db, tex_db, tfrag_level);
+
 
   // copy in any art groups that were requested to be common
   if (config.common_art_groups.size() > 0) {
@@ -370,8 +390,8 @@ void extract_common(const ObjectFileDB& db,
       compressed.data(), compressed.size());
 
   if (config.rip_levels) {
-    auto file_path = file_util::get_jak_project_dir() / "glb_out" /
-                     game_version_names[config.game_version] / "common";
+    auto file_path = file_util::get_jak_project_dir() / "decompiler_out" /
+                     game_version_names[config.game_version] / "levels" / "common";
     save_level_foreground_as_gltf(tfrag_level, art_group_data, file_path);
   }
 }
@@ -407,17 +427,23 @@ void extract_from_level(const ObjectFileDB& db,
                                compressed.data(), compressed.size());
 
   if (config.rip_levels) {
-    auto back_file_path = file_util::get_jak_project_dir() / "glb_out" /
-                          game_version_names[config.game_version] / level_data.level_name /
+    auto back_file_path = file_util::get_jak_project_dir() / "decompiler_out" /
+                          game_version_names[config.game_version] / "levels" /
+                          level_data.level_name /
                           fmt::format("{}-background.glb", level_data.level_name);
     file_util::create_dir_if_needed_for_file(back_file_path);
     save_level_background_as_gltf(level_data, back_file_path);
-    auto fore_file_path = file_util::get_jak_project_dir() / "glb_out" /
-                          game_version_names[config.game_version] / level_data.level_name;
+    auto fore_file_path = file_util::get_jak_project_dir() / "decompiler_out" /
+                          game_version_names[config.game_version] / "levels" /
+                          level_data.level_name;
     save_level_foreground_as_gltf(level_data, art_group_data, fore_file_path);
   }
   file_util::write_text_file(entities_folder / fmt::format("{}-actors.json", level_data.level_name),
                              extract_actors_to_json(bsp_header.actors));
+  if (config.game_version == GameVersion::Jak1)
+    file_util::write_text_file(
+        entities_folder / fmt::format("{}-ambients.json", level_data.level_name),
+        extract_ambients_to_json(bsp_header.ambients));
 }
 
 void extract_all_levels(const ObjectFileDB& db,

@@ -866,12 +866,7 @@
        (cond
          ((logtest? (-> this flags) (spydroid-orig-flag sof0))
           (set! sv-144 (the-as vector (send-event (ppointer->process (-> this parent)) 'widow-get-center)))
-          (let* ((s1-0 arg0)
-                 (s0-0 (if (type? s1-0 process-drawable)
-                           s1-0
-                           )
-                       )
-                 )
+          (let ((s0-0 (as-type arg0 process-drawable)))
             (let ((v1-7 sv-144))
               (b! (not v1-7) cfg-16 :likely-delay (set! v1-8 sv-144))
               )
@@ -1094,13 +1089,13 @@
     (let ((v1-25 (new 'stack-no-clear 'vector)))
       (vector-copy! v1-25 (-> self root trans))
       (cond
-        ((logtest? (-> *part-group-id-table* 219 flags) (sp-group-flag sp13))
+        ((logtest? (-> group-kg-explosion flags) (sp-group-flag sp13))
          (vector-copy! (-> *launch-matrix* trans) v1-25)
-         (part-tracker-spawn part-tracker-subsampler :to self :group (-> *part-group-id-table* 219))
+         (part-tracker-spawn part-tracker-subsampler :to self :group group-kg-explosion)
          )
         (else
           (vector-copy! (-> *launch-matrix* trans) v1-25)
-          (part-tracker-spawn part-tracker :to self :group (-> *part-group-id-table* 219))
+          (part-tracker-spawn part-tracker :to self :group group-kg-explosion)
           )
         )
       )
@@ -1728,8 +1723,8 @@
   0
   (set-gravity-length (-> this root dynam) 573440.0)
   (logior! (-> this nav flags) (nav-control-flag momentum-ignore-heading))
-  (set! (-> this part) (create-launch-control (-> *part-group-id-table* 1521) this))
-  (set! (-> this explode-part) (create-launch-control (-> *part-group-id-table* 1522) this))
+  (set! (-> this part) (create-launch-control group-spydroid-orig-trail this))
+  (set! (-> this explode-part) (create-launch-control group-spydroid-orig-explode this))
   (add-connection
     *part-engine*
     this

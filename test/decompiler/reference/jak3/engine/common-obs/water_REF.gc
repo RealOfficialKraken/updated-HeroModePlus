@@ -450,11 +450,7 @@
                          )
                       )
                )
-           (let* ((s3-2 (-> this process control))
-                  (v1-167 (if (type? s3-2 control-info)
-                              s3-2
-                              )
-                          )
+           (let* ((v1-167 (as-type (-> this process control) control-info))
                   (v1-168 (and v1-167 (not (time-elapsed? (-> v1-167 last-time-on-surface) (seconds 0.5)))))
                   )
              (if (and (logtest? (-> this flags) (water-flag swim-ground))
@@ -754,8 +750,8 @@
 (defun splash-spawn ((arg0 float) (arg1 vector) (arg2 int))
   (cond
     ((logtest? (-> (if (zero? arg2)
-                       (-> *part-group-id-table* 193)
-                       (-> *part-group-id-table* 192)
+                       group-part-water-splash-small
+                       group-part-water-splash
                        )
                    flags
                    )
@@ -766,8 +762,8 @@
        part-tracker-subsampler
        :to *entity-pool*
        :group (if (zero? arg2)
-           (-> *part-group-id-table* 193)
-           (-> *part-group-id-table* 192)
+           group-part-water-splash-small
+           group-part-water-splash
            )
        :callback (the-as (function part-tracker vector) part-water-splash-callback)
        :userdata (the-as uint arg0)
@@ -779,8 +775,8 @@
         part-tracker
         :to *entity-pool*
         :group (if (zero? arg2)
-            (-> *part-group-id-table* 193)
-            (-> *part-group-id-table* 192)
+            group-part-water-splash-small
+            group-part-water-splash
             )
         :callback (the-as (function part-tracker vector) part-water-splash-callback)
         :userdata (the-as uint arg0)
@@ -1015,12 +1011,7 @@
                (logior! (-> arg0 flags) (water-flag mud))
                )
               ((= v1-56 'mech)
-               (let* ((s0-2 arg4)
-                      (a0-50 (if (type? s0-2 process-focusable)
-                                 s0-2
-                                 )
-                             )
-                      )
+               (let ((a0-50 (as-type arg4 process-focusable)))
                  (when (and a0-50 (not (logtest? (focus-status mech) (-> (the-as process-focusable a0-50) focus-status))))
                    (set! (-> arg0 flags) (water-flag))
                    0

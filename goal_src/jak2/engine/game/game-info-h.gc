@@ -11,6 +11,9 @@
 
 (define matt-str (new 'global 'string 2048 (the-as string #f)))
 (define *pc-encoded-matt-str* (new 'global 'string 2048 (the-as string #f)))
+(declare-type target-explode-grenade process)
+(define *target-explode-grenade* (the (pointer target-explode-grenade) #f))
+(defun-extern spawn-plasmite-grenade none)
 
 ;(print help) in repl to see this
 (define help "

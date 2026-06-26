@@ -801,13 +801,13 @@
         )
       )
     (cond
-      ((logtest? (-> *part-group-id-table* 228 flags) (sp-group-flag sp13))
+      ((logtest? (-> group-gun-scorp-shot-hit flags) (sp-group-flag sp13))
        (vector-copy! (-> *launch-matrix* trans) (-> this root trans))
-       (part-tracker-spawn part-tracker-subsampler :to *entity-pool* :group (-> *part-group-id-table* 228))
+       (part-tracker-spawn part-tracker-subsampler :to *entity-pool* :group group-gun-scorp-shot-hit)
        )
       (else
         (vector-copy! (-> *launch-matrix* trans) (-> this root trans))
-        (part-tracker-spawn part-tracker :to *entity-pool* :group (-> *part-group-id-table* 228))
+        (part-tracker-spawn part-tracker :to *entity-pool* :group group-gun-scorp-shot-hit)
         )
       )
     0
@@ -1201,18 +1201,8 @@
   (let ((gp-1 (-> self node-list data 7 bone transform)))
     (vector-copy! (-> self aim-dir) (-> gp-1 fvec))
     (when (-> self target-handle)
-      (let* ((s5-1 (handle->process (-> self target-handle)))
-             (s4-2 (if (type? s5-1 process-drawable)
-                       s5-1
-                       )
-                   )
-             )
-        (when (and s4-2 (let ((s5-2 (-> (the-as process-drawable s4-2) root)))
-                          (if (type? s5-2 collide-shape)
-                              s5-2
-                              )
-                          )
-                   )
+      (let ((s4-2 (as-type (handle->process (-> self target-handle)) process-drawable)))
+        (when (and s4-2 (as-type (-> (the-as process-drawable s4-2) root) collide-shape))
           (let ((s5-4 (vector-!
                         (new 'stack-no-clear 'vector)
                         (-> (the-as process-focusable s4-2) root root-prim prim-core world-sphere)
@@ -1402,21 +1392,15 @@
         (let ((s5-1 (new 'stack-no-clear 'matrix)))
           (matrix-copy! s5-1 (-> gp-0 bone transform))
           (matrix->trans (-> gp-0 bone transform) (-> s5-1 trans))
-          (if (logtest? (-> *part-group-id-table* 227 flags) (sp-group-flag sp13))
+          (if (logtest? (-> group-gun-scorp-shells flags) (sp-group-flag sp13))
               (part-tracker-spawn
                 part-tracker-subsampler
                 :to *entity-pool*
-                :group (-> *part-group-id-table* 227)
+                :group group-gun-scorp-shells
                 :duration 1
                 :mat-joint s5-1
                 )
-              (part-tracker-spawn
-                part-tracker
-                :to *entity-pool*
-                :group (-> *part-group-id-table* 227)
-                :duration 1
-                :mat-joint s5-1
-                )
+              (part-tracker-spawn part-tracker :to *entity-pool* :group group-gun-scorp-shells :duration 1 :mat-joint s5-1)
               )
           )
         )
@@ -1899,12 +1883,8 @@
               (new 'stack 'font-context *font-default-matrix* 32 320 0.0 (font-color default) (font-flags shadow kerning))
               )
             )
-        (let ((v1-21 gp-1))
-          (set! (-> v1-21 width) (the float 340))
-          )
-        (let ((v1-22 gp-1))
-          (set! (-> v1-22 height) (the float 80))
-          )
+        (set-width! gp-1 340)
+        (set-height! gp-1 80)
         (let ((v1-23 gp-1)
               (a0-15 (-> *setting-control* user-default language))
               )

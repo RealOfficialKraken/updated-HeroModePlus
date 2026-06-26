@@ -36,7 +36,14 @@ TODO: FINISH HELL MODE
 FINISHED :D
 |#
 
-
+(defun turn-to-scene-camera ((vec vector) (tpos vector))
+    (send-event *camera* 'teleport-to-vector-start-string vec)
+    (set-vector! (-> *target* control trans) (-> tpos x) (-> tpos y) (-> tpos z) 1.0)
+    (send-event *target* 'draw #f)
+    (persist-with-delay *setting-control* 'gun (seconds 0.5) 'gun #f 0.0 0)
+    (process-grab? *target* #f)
+    (set! camera-locked #t)
+)
 
 (defun freeze-enemies-in-menu! ()
     (process-spawn-function process
@@ -154,41 +161,6 @@ FINISHED :D
 
 
     (defun runs-every-frame ()
-      ;; (increase-power-cell-by-one) This is a call to increase-power-cell-by-one defined in mod-common-functions.gc
-
-      ;; Sample code to turn jak pink whenever he's doing the jetboard hover glitch
-      ;; (when *target* 
-      ;;   (if (board-hovering?)
-      ;;     (draw-pink *target*)
-      ;;     (draw-normal *target*)
-      ;;     )
-      ;;   )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 (when (= mm-hint-1 #t)
     (+! mm-hint-1i 1)
     (when (not *scene-player*)
@@ -197,7 +169,7 @@ FINISHED :D
     )
     (clear matt-str)
         (clear *pc-encoded-matt-str*)
-        (format matt-str "<COLOR_WHITE>Press <COLOR_RED>O<COLOR_WHITE> to toggle <COLOR_CYAN>Mushroom Movies<COLOR_WHITE>!"
+        (format matt-str "<COLOR_WHITE>Press <PAD_CIRCLE> to toggle <COLOR_CYAN>Mushroom Movies<COLOR_WHITE>!"
         )
         (pc-encode-utf8-string matt-str *pc-encoded-matt-str*)
         (with-dma-buffer-add-bucket ((buf (-> (current-frame) global-buf)) (bucket-id debug-no-zbuf1))
@@ -6265,7 +6237,7 @@ Eco War is similar to BlackJack, but with a twist!
     ~%<COLOR_BLUE>  Made by Kraken
     ~%
     ~%
-    <COLOR_WHITE>~%A normal playthrough is just like HeroMode + JetBOARD!
+    <COLOR_WHITE>~%A normal playthrough is just like HeroMode but with the JetBOARD!
     ~%<COLOR_CYAN>But there's a huge twist:
     ~%<COLOR_WHITE>You can enable Gun Mods, but you'll also get a modifier.
     ~%All modifiers have a give and a take, left vague on purpose to figure out for yourselves.
@@ -8345,7 +8317,17 @@ Eco War is similar to BlackJack, but with a twist!
   )
   )
 
-
+  (when 
+    (and 
+      (not *target-explode-grenade*)
+      target-explode
+      (= (paused?) #f)
+      (= (pause-allowed?) #t) 
+      (not *scene-player*)
+      *target*
+    )
+    (spawn-plasmite-grenade)
+  )
 
 
 

@@ -726,7 +726,7 @@
 
 ;; definition for method 146 of type robo-hover
 ;; WARN: Return type mismatch int vs sound-id.
-(defmethod play-damage-sound ((this robo-hover) (arg0 int))
+(defmethod play-damage-or-death-sound ((this robo-hover) (arg0 int))
   "Pick and play the damage/death sound."
   (if (and (zero? arg0) (logtest? (penetrate enemy-yellow-shot) (-> this incoming penetrate-using)))
       (sound-play "hover-take-hit")
@@ -929,12 +929,7 @@
         )
       )
     (let ((gp-0 (-> self dest-pos)))
-      (let* ((s5-0 (handle->process (-> self focus handle)))
-             (a0-6 (if (type? s5-0 process-focusable)
-                       s5-0
-                       )
-                   )
-             )
+      (let ((a0-6 (as-type (handle->process (-> self focus handle)) process-focusable)))
         (vector-copy! gp-0 (get-trans (the-as process-focusable a0-6) 0))
         )
       (+! (-> gp-0 y) -20480.0)
@@ -1139,13 +1134,13 @@
       )
     (let ((v1-16 (vector<-cspace! (new 'stack-no-clear 'vector) (joint-node robo-hover-lod0-jg chest))))
       (cond
-        ((logtest? (-> *part-group-id-table* 219 flags) (sp-group-flag sp13))
+        ((logtest? (-> group-kg-explosion flags) (sp-group-flag sp13))
          (vector-copy! (-> *launch-matrix* trans) v1-16)
-         (part-tracker-spawn part-tracker-subsampler :to self :group (-> *part-group-id-table* 219))
+         (part-tracker-spawn part-tracker-subsampler :to self :group group-kg-explosion)
          )
         (else
           (vector-copy! (-> *launch-matrix* trans) v1-16)
-          (part-tracker-spawn part-tracker :to self :group (-> *part-group-id-table* 219))
+          (part-tracker-spawn part-tracker :to self :group group-kg-explosion)
           )
         )
       )
@@ -1836,8 +1831,8 @@
   (set! (-> this path) (new 'process 'path-control this 'path 0.0 (-> this entity) #f))
   (set! (-> this path-u) 0.0)
   (logior! (-> this path flags) (path-control-flag display draw-line draw-point draw-text))
-  (set! (-> this smoke-part) (create-launch-control (-> *part-group-id-table* 558) this))
-  (set! (-> this engine-part) (create-launch-control (-> *part-group-id-table* 560) this))
+  (set! (-> this smoke-part) (create-launch-control group-robo-gun-smoke this))
+  (set! (-> this engine-part) (create-launch-control group-robo-engine this))
   (add-connection
     *part-engine*
     this

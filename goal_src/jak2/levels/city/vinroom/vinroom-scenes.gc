@@ -275,30 +275,6 @@
     )
   )
 
-(defpartgroup group-plasmitebomb-armed
-  :id 279
-  :flags (use-local-clock)
-  :bounds (static-bspherem 0 0 0 2)
-  :parts ((sp-item 1241 :flags (bit6) :period (seconds 0.335) :length (seconds 0.167)))
-  )
-
-(defpart 1241
-  :init-specs ((:texture (glow effects))
-    (:num 1.0)
-    (:y (meters 0.07))
-    (:scale-x (meters 0.5))
-    (:rot-x (degrees 0.9))
-    (:scale-y (meters 1))
-    (:r 255.0)
-    (:g 0.0)
-    (:b 0.0)
-    (:a 48.0 16.0)
-    (:timer (seconds 0.017))
-    (:flags (glow))
-    (:userdata 737.28)
-    )
-  )
-
 (defskelgroup skel-pow-mov-plat pow-mov-plat pow-mov-plat-lod0-jg pow-mov-plat-idle-ja
               ((pow-mov-plat-lod0-mg (meters 999999)))
               :bounds (static-spherem 0 0 0 5)

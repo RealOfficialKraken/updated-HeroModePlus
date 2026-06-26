@@ -1,0 +1,245 @@
+(in-package goal)
+
+;;name: target-explode-grenade.gc
+
+(defpartgroup group-plasmitebomb-armed
+  :id 279
+  :flags (use-local-clock)
+  :bounds (static-bspherem 0 0 0 2)
+  :parts ((sp-item 1241 :flags (bit6) :period (seconds 0.335) :length (seconds 0.167)))
+  )
+
+(defpartgroup group-plasmitebomb-armed-1
+  :id 1295
+  :duration (seconds 0.017)
+  :flags (use-local-clock)
+  :bounds (static-bspherem 0 0 0 2)
+  :parts ((sp-item 5488 :flags (bit6) :period (seconds 0.017) :length (seconds 0.017)))
+  )
+
+(defpart 1241
+  :init-specs ((:texture (glow effects))
+    (:num 1.0)
+    (:y (meters 0.07))
+    (:scale-x (meters 0.5))
+    (:rot-x (degrees 0.9))
+    (:scale-y (meters 1))
+    (:r 255.0)
+    (:g 0.0)
+    (:b 0.0)
+    (:a 48.0 16.0)
+    (:timer (seconds 0.017))
+    (:flags (glow))
+    (:userdata 737.28)
+    )
+  )
+
+(defpart 5488
+  :init-specs ((:texture (glow effects))
+    (:num 1.0)
+    (:y (meters 0.07))
+    (:scale-x (meters 1.5))
+    (:rot-x (degrees 0.9))
+    (:scale-y (meters 3))
+    (:r 255.0)
+    (:g 0.0)
+    (:b 0.0)
+    (:a 48.0 16.0)
+    (:fade-a -0.3)
+    (:timer (seconds 0.067))
+    (:flags (glow))
+    (:userdata 737.28)
+    )
+  )
+
+(defskelgroup skel-te-grenade plasmitebomb plasmitebomb-lod0-jg plasmitebomb-idle-ja
+              ((plasmitebomb-lod0-mg (meters 999999)))
+              :bounds (static-spherem 0 0 0 0.3)
+              )
+
+(deftype target-explode-grenade (process-drawable)
+    ((part-plasmite   sparticle-launch-control)
+     (part-time       time-frame)
+     (blink-end-time  time-frame)
+     (scale-flip?     symbol)
+     )
+    (:state-methods
+        idle
+        exploding
+        dead
+    )
+)
+
+(defun target-explode-grenade-follow-jak! ((obj target-explode-grenade))
+  (let ((pos (new-stack-vector0))
+        (back-offset (new-stack-vector0))
+        (up-offset (new-stack-vector0))
+        (back-cspace (the-as cspace (-> *target* node-list data 6)))
+        )
+    (vector<-cspace! pos back-cspace)
+    (vector-z-quaternion! back-offset (-> *target* root quat))
+    (vector-float*! back-offset back-offset (meters -0.35))
+    (set-vector! up-offset 0.0 (meters 0.08) 0.0 0.0)
+    (vector+! pos pos back-offset)
+    (vector+! pos pos up-offset)
+    (vector-copy! (-> obj root trans) pos)
+    (quaternion-copy! (-> obj root quat) (-> *target* root quat))
+    )
+  (none)
+  )
+
+(defbehavior target-explode-grenade-init-by-other target-explode-grenade ()
+    (set! (-> self root) (new 'process 'trsqv))
+    (with-pp
+    (initialize-skeleton
+      self
+      (the-as skeleton-group
+        (art-group-get-by-name *level* "skel-te-grenade" (the-as (pointer uint32) #f))
+        )
+      (the-as pair 0)
+      )
+    )
+    (set! (-> self blink-end-time) 0)
+    (set! (-> self part-time) 0)
+    (set-vector! (-> self root scale) 1.3 1.3 1.3 1.0)
+    (set! (-> self scale-flip?) #f)
+    (if (= target-explode #t)
+        (go-virtual idle)
+        (go-virtual dead)
+    )
+    (none)
+)
+
+(defun spawn-plasmitebomb-particle-at! ((pos vector))
+  (let ((part-proc (get-process *default-dead-pool* part-tracker #x4000)))
+    (when part-proc
+      ((method-of-type part-tracker activate)
+        (the-as part-tracker part-proc)
+        *entity-pool*
+        (symbol->string (-> part-tracker symbol))
+        (the-as pointer #x70004000)
+        )
+      (set! (-> *launch-matrix* trans quad) (-> pos quad))
+      (run-function-in-process
+        part-proc
+        part-tracker-init
+        (-> *part-group-id-table* 1295)
+        0
+        #f
+        #f
+        #f
+        *launch-matrix*
+        )
+      )
+    )
+  (none)
+  )
+
+(defun target-explode-grenade-flicker-scale! ((obj target-explode-grenade))
+  (if (-> obj scale-flip?)
+      (set-vector! (-> obj root scale) 1.85 1.85 1.85 1.0)
+      (set-vector! (-> obj root scale) 1.3 1.3 1.3 1.0)
+      )
+  (set! (-> obj scale-flip?) (not (-> obj scale-flip?)))
+
+  (none)
+  )
+
+(defun target-explode-grenade-pulse-plasmite! ((obj target-explode-grenade))
+  (when (or (= (-> obj part-time) 0)
+            (time-elapsed? (-> obj part-time) (seconds 4.3))
+            )
+    (set-time! (-> obj part-time))
+    (set! (-> obj blink-end-time) (+ (current-time) (seconds 0.067)))
+    )
+  (when (< (current-time) (-> obj blink-end-time))
+    (spawn-plasmitebomb-particle-at! (-> obj root trans))
+    )
+
+  (none)
+  )
+
+(defun target-explode-grenade-exploding-plasmite! ((obj target-explode-grenade))
+  (when (or (= (-> obj part-time) 0)
+            (time-elapsed? (-> obj part-time) (seconds 0.5))
+            )
+    (set-time! (-> obj part-time))
+    (set! (-> obj blink-end-time) (+ (current-time) (seconds 0.067)))
+    )
+  (when (< (current-time) (-> obj blink-end-time))
+    (spawn-plasmitebomb-particle-at! (-> obj root trans))
+    )
+
+  (none)
+  )
+
+(defun spawn-plasmite-grenade ()
+    (set! *target-explode-grenade*
+        (process-spawn target-explode-grenade :name "target-explode-grenade" *active-pool*)
+    )
+    (none)
+)
+
+(defstate idle (target-explode-grenade)
+  :virtual #t
+  :code (behavior ()
+    (loop
+      (cond
+        ((not target-explode)
+         (go-virtual dead)
+         )
+        ((or (not *target*)
+             (<= (-> *target* fact health) 0.0)
+             )
+         (go-virtual dead)
+         )
+        (else
+          (target-explode-grenade-follow-jak! self)
+          (target-explode-grenade-pulse-plasmite! self)
+          (when (= explode-fstart #t)
+            (go-virtual exploding)
+            )
+          )
+        )
+
+      (suspend)
+      )
+    )
+  :post ja-post
+  )
+
+(defstate exploding (target-explode-grenade)
+    :virtual #t
+    :enter (behavior ()
+      (set! (-> self scale-flip?) #f)
+      (set-time! (-> self part-time))
+      (set-vector! (-> self draw color-mult) 1.0 0.0 1.0 1.0)
+      )
+    :code (behavior ()
+        (loop
+        (when *target*
+            (target-explode-grenade-follow-jak! self)
+            (target-explode-grenade-flicker-scale! self)
+            (target-explode-grenade-exploding-plasmite! self)
+        )
+        (when
+            (and
+                *target*
+                (<= (-> *target* fact health) 0.0)
+            )
+            (go-virtual dead)
+        )
+        (suspend)
+        )
+    )
+    :post ja-post
+)
+
+(defstate dead (target-explode-grenade)
+    :virtual #t
+    :code (behavior ()
+    (set! *target-explode-grenade* #f)
+    (kill-by-name "target-explode-grenade" *active-pool*)
+    (deactivate self)
+    )
+)
