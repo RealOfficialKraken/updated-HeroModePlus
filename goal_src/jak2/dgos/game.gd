@@ -498,4 +498,5 @@
   "dig-part.o"
   "save-def.o"
   "target-explode-grenade.o"
+  "eco-war-card.o"
  ))
