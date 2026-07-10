@@ -309,6 +309,7 @@ void extract_common(const ObjectFileDB& db,
   extract_art_groups_from_level(db, tex_db, {}, "ARTSPOOL", tfrag_level, art_group_data);
 
   extract_single_ag("STR.DGO", "plasmitebomb-ag", db, tex_db, tfrag_level);
+  extract_single_ag("TITLE.DGO", "jak-logo-ag", db, tex_db, tfrag_level);
 
 
   // copy in any art groups that were requested to be common

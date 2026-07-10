@@ -38,6 +38,37 @@ FINISHED :D
 
 (define ohshitactualfirst-pending #f)
 (defun-extern spawn-eco-war-card vector int int none)
+(define global-geni 0)
+(defun-extern spawn-bj-card-add-number int int none)
+
+(define in-mmenu? #f)
+
+(defun draw-mod-menu-text-custom ((text string) (text-x-pos int) (text-y-pos int) (text-scale float) (left? symbol) (middle? symbol) (right? symbol))
+    (clear matt-str)
+    (clear *pc-encoded-matt-str*)
+    (format matt-str text)
+    (pc-encode-utf8-string matt-str *pc-encoded-matt-str*)
+    (with-dma-buffer-add-bucket ((buf (-> (current-frame) global-buf)) (bucket-id debug-no-zbuf1))
+        (dma-buffer-add-gs-set-flusha buf (alpha-1 (new 'static 'gs-alpha :b #x1 :d #x1)) (tex1-1 (new 'static 'gs-tex1 :mmag #x1 :mmin #x1)))
+        (cond 
+            (left?
+            (let ((font-ctx (new 'stack 'font-context *font-default-matrix* text-x-pos text-y-pos 0.0 (font-color white) (font-flags shadow kerning large))))
+                (set! (-> font-ctx scale) text-scale)
+                (draw-string-adv *pc-encoded-matt-str* buf font-ctx))
+            )
+            (middle?
+            (let ((font-ctx (new 'stack 'font-context *font-default-matrix* text-x-pos text-y-pos 0.0 (font-color white) (font-flags middle shadow kerning large))))
+                (set! (-> font-ctx scale) text-scale)
+                (draw-string-adv *pc-encoded-matt-str* buf font-ctx))
+            )
+            (right?
+            (let ((font-ctx (new 'stack 'font-context *font-default-matrix* text-x-pos text-y-pos 0.0 (font-color white) (font-flags right shadow kerning large))))
+                (set! (-> font-ctx scale) text-scale)
+                (draw-string-adv *pc-encoded-matt-str* buf font-ctx))
+            )
+        )
+    )
+    (none))
 
 (define jcard1-eco 0)
 (define jcard2-eco 0)
@@ -62,6 +93,308 @@ FINISHED :D
 (define dealer-turn-active? #f)
 (define dealer-turn-stage 0)
 (define dealer-turn-timer 0)
+
+(define bj-force-jakpot-test? #f)
+(define bj-force-jakpot-eco 3)
+
+(defun bj-force-next-jakpot! ((eco int))
+  (set! bj-force-jakpot-test? #t)
+  (set! bj-force-jakpot-eco eco)
+  (print "Next Eco War JakPot forced.")
+  (none)
+  )
+
+(define jak-aces-high 0)
+(define dealer-aces-high 0)
+
+(defun bj-force-jakpot-eco! ()
+  (when (= bj-force-jakpot-test? #t)
+    (cond
+      ((= jturn 1)
+        (set! jcard1-eco bj-force-jakpot-eco)
+        )
+      ((= jturn 2)
+        (set! jcard2-eco bj-force-jakpot-eco)
+        )
+      ((= jturn 3)
+        (set! jcard3-eco bj-force-jakpot-eco)
+        )
+      ((= jturn 4)
+        (set! jcard4-eco bj-force-jakpot-eco)
+        (set! bj-force-jakpot-test? #f)
+        )
+      )
+    )
+  (none)
+  )
+
+(defun bj-check-jakpot-win! ()
+  (when
+    (and
+      (= round-started? #t)
+      (>= jturn 4)
+      (= jcard1 #t)
+      (= jcard2 #t)
+      (= jcard3 #t)
+      (= jcard4 #t)
+      (= jackpot-win #f)
+      (= jcard1-eco jcard2-eco)
+      (= jcard2-eco jcard3-eco)
+      (= jcard3-eco jcard4-eco)
+      )
+    (set! jackpot-win #t)
+    (set! jcard1s "<COLOR_PINK>~d")
+    (set! jcard2s "<COLOR_PINK>~d")
+    (set! jcard3s "<COLOR_PINK>~d")
+    (set! jcard4s "<COLOR_PINK>~d")
+    (print "JAKPOT HIT")
+    )
+  (none)
+  )
+
+(defun bj-debug-eco-name ((eco int))
+  (cond
+    ((= eco 0)
+      "GREEN"
+      )
+    ((= eco 1)
+      "BLUE"
+      )
+    ((= eco 2)
+      "YELLOW"
+      )
+    ((= eco 3)
+      "RED"
+      )
+    (else
+      "INVALID"
+      )
+    )
+  )
+
+(defun bj-debug-card-line ((owner string) (slot int) (active? symbol) (value int) (eco int))
+  (cond
+    (active?
+      (format #t
+        "~%[BJ DEBUG] ~S CARD ~D: value=~D eco=~D type=~S"
+        owner
+        slot
+        value
+        eco
+        (bj-debug-eco-name eco)
+        )
+      )
+    (else
+      (format #t
+        "~%[BJ DEBUG] ~S CARD ~D: NOT DEALT value=~D eco=~D type=~S"
+        owner
+        slot
+        value
+        eco
+        (bj-debug-eco-name eco)
+        )
+      )
+    )
+  (none)
+  )
+
+(defun bj-debug-state! ((reason string))
+  (format #t
+    "~%~%================ BLACKJACK DEBUG ================"
+    )
+
+  (format #t
+    "~%EVENT: ~S"
+    reason
+    )
+
+  (format #t
+    "~%ROUND: started=~S player-turn=~D dealer-turn=~D"
+    round-started?
+    jturn
+    dturn
+    )
+
+  (format #t
+    "~%PLAYER: total=~D aces-high=~D"
+    added-cards-jak
+    jak-aces-high
+    )
+
+  (bj-debug-card-line "PLAYER" 1 jcard1 jcard1i jcard1-eco)
+  (bj-debug-card-line "PLAYER" 2 jcard2 jcard2i jcard2-eco)
+  (bj-debug-card-line "PLAYER" 3 jcard3 jcard3i jcard3-eco)
+  (bj-debug-card-line "PLAYER" 4 jcard4 jcard4i jcard4-eco)
+
+  (format #t
+    "~%DEALER: total=~D aces-high=~D"
+    added-cards-dealer
+    dealer-aces-high
+    )
+
+  (bj-debug-card-line "DEALER" 1 dcard1 dcard1i dcard1-eco)
+  (bj-debug-card-line "DEALER" 2 dcard2 dcard2i dcard2-eco)
+  (bj-debug-card-line "DEALER" 3 dcard3 dcard3i dcard3-eco)
+  (bj-debug-card-line "DEALER" 4 dcard4 dcard4i dcard4-eco)
+
+  (format #t
+    "~%STATE: hit=~S stay=~S dealer-stay=~S win=~S lose=~S"
+    bj-hit
+    bj-stay
+    dealer-stay
+    bj-win
+    bj-lose
+    )
+
+  (format #t
+    "~%JACKPOT: active=~S forced=~S forced-type=~D"
+    jackpot-win
+    bj-force-jakpot-test?
+    bj-force-jakpot-eco
+    )
+
+  (format #t
+    "~%PLAYER MATCH: 1=2:~S 2=3:~S 3=4:~S all-four:~S"
+    (= jcard1-eco jcard2-eco)
+    (= jcard2-eco jcard3-eco)
+    (= jcard3-eco jcard4-eco)
+    (and
+      (= jcard1-eco jcard2-eco)
+      (= jcard2-eco jcard3-eco)
+      (= jcard3-eco jcard4-eco)
+      )
+    )
+
+  (format #t
+    "~%=================================================~%~%"
+    )
+
+  (none)
+  )
+
+(defun bj-demote-one-jak-ace! ()
+  (cond
+    ((= jcard4i 11)
+      (set! jcard4i 1)
+      )
+    ((= jcard3i 11)
+      (set! jcard3i 1)
+      )
+    ((= jcard2i 11)
+      (set! jcard2i 1)
+      )
+    ((= jcard1i 11)
+      (set! jcard1i 1)
+      )
+    )
+  (-! added-cards-jak 10)
+  (-! jak-aces-high 1)
+  (none)
+  )
+
+(defun bj-demote-one-dealer-ace! ()
+  (cond
+    ((= dcard4i 11)
+      (set! dcard4i 1)
+      )
+    ((= dcard3i 11)
+      (set! dcard3i 1)
+      )
+    ((= dcard2i 11)
+      (set! dcard2i 1)
+      )
+    ((= dcard1i 11)
+      (set! dcard1i 1)
+      )
+    )
+  (-! added-cards-dealer 10)
+  (-! dealer-aces-high 1)
+  (none)
+  )
+
+(defun bj-fix-jak-aces! ()
+  (when (and (> added-cards-jak 21) (> jak-aces-high 0))
+    (bj-demote-one-jak-ace!)
+    )
+  (when (and (> added-cards-jak 21) (> jak-aces-high 0))
+    (bj-demote-one-jak-ace!)
+    )
+  (when (and (> added-cards-jak 21) (> jak-aces-high 0))
+    (bj-demote-one-jak-ace!)
+    )
+  (when (and (> added-cards-jak 21) (> jak-aces-high 0))
+    (bj-demote-one-jak-ace!)
+    )
+  (none)
+  )
+
+(defun bj-fix-dealer-aces! ()
+  (when (and (> added-cards-dealer 21) (> dealer-aces-high 0))
+    (bj-demote-one-dealer-ace!)
+    )
+  (when (and (> added-cards-dealer 21) (> dealer-aces-high 0))
+    (bj-demote-one-dealer-ace!)
+    )
+  (when (and (> added-cards-dealer 21) (> dealer-aces-high 0))
+    (bj-demote-one-dealer-ace!)
+    )
+  (when (and (> added-cards-dealer 21) (> dealer-aces-high 0))
+    (bj-demote-one-dealer-ace!)
+    )
+  (none)
+  )
+
+(defun bj-apply-jak-card! ((slot int) (card int))
+  (when (= card 1)
+    (set! card 11)
+    (+! jak-aces-high 1)
+    )
+
+  (cond
+    ((= slot 1)
+      (set! jcard1i card)
+      )
+    ((= slot 2)
+      (set! jcard2i card)
+      )
+    ((= slot 3)
+      (set! jcard3i card)
+      )
+    ((= slot 4)
+      (set! jcard4i card)
+      )
+    )
+
+  (+! added-cards-jak card)
+  (bj-fix-jak-aces!)
+  (none)
+  )
+
+(defun bj-apply-dealer-card! ((slot int) (card int))
+  (when (= card 1)
+    (set! card 11)
+    (+! dealer-aces-high 1)
+    )
+
+  (cond
+    ((= slot 1)
+      (set! dcard1i card)
+      )
+    ((= slot 2)
+      (set! dcard2i card)
+      )
+    ((= slot 3)
+      (set! dcard3i card)
+      )
+    ((= slot 4)
+      (set! dcard4i card)
+      )
+    )
+
+  (+! added-cards-dealer card)
+  (bj-fix-dealer-aces!)
+  (none)
+  )
 
 (defun bj-ui-color ((r int) (g int) (b int) (a int))
   (new 'static 'rgba :r r :g g :b b :a a)
@@ -117,6 +450,9 @@ FINISHED :D
   (set! dealer-turn-active? #f)
   (set! dealer-turn-stage 0)
   (set! dealer-turn-timer 0)
+
+  (set! jak-aces-high 0)
+  (set! dealer-aces-high 0)
 
   (none)
   )
@@ -214,13 +550,19 @@ FINISHED :D
   )
 
 (defun turn-to-scene-camera ((vec vector) (tpos vector))
-    (send-event *camera* 'teleport-to-vector-start-string vec)
-    (set-vector! (-> *target* control trans) (-> tpos x) (-> tpos y) (-> tpos z) 1.0)
-    (send-event *target* 'draw #f)
-    (persist-with-delay *setting-control* 'gun (seconds 0.5) 'gun #f 0.0 0)
-    (process-grab? *target* #f)
-    (set! camera-locked #t)
-)
+  (set-vector! (-> *target* control trans) (-> tpos x) (-> tpos y) (-> tpos z) 1.0)
+  (set-vector! (-> *target* root trans) (-> tpos x) (-> tpos y) (-> tpos z) 1.0)
+  (vector-zero! (-> *target* root transv))
+  (update-transforms (-> *target* root))
+
+  (send-event *camera* 'teleport-to-vector-start-string vec)
+
+  (send-event *target* 'draw #f)
+  (persist-with-delay *setting-control* 'gun (seconds 0.5) 'gun #f 0.0 0)
+  (process-grab? *target* #f)
+  (set! camera-locked #t)
+  (none)
+  )
 
 (defun freeze-enemies-in-menu! ()
     (process-spawn-function process
@@ -339,9 +681,251 @@ FINISHED :D
     (none)
   )
 
+(defskelgroup skel-jak2-logo jak-logo jak-logo-lod0-jg -1
+              ((jak-logo-lod0-mg (meters 999999)))
+              :bounds (static-spherem 0 10 0 20)
+              :origin-joint-index 3
+              )
 
+(deftype jak2logo (process-drawable)
+  ((press-start-on? symbol)
+   (hero-text-on? symbol)
+   (gen-i int)
+   )
+  (:state-methods
+    idle
+    entering
+    )
+  (:methods
+    (jak2logo-make-root (_type_) none)
+    )
+  )
 
-    (defun runs-every-frame ()
+  (define *jak2logo* (the (pointer jak2logo) #f))
+
+(defmethod jak2logo-make-root ((this jak2logo))
+  (let ((root (new 'process 'collide-shape-moving this (collide-list-enum usually-hit-by-player))))
+    (set! (-> root dynam) (copy *standard-dynamics* 'process))
+    (set! (-> root reaction) cshape-reaction-default)
+    (set! (-> root no-reaction)
+      (the-as (function collide-shape-moving collide-query vector vector object) nothing))
+
+    (let ((prim (new 'process 'collide-shape-prim-sphere root (the-as uint 0))))
+      (set! (-> prim prim-core collide-as) (collide-spec))
+      (set! (-> prim prim-core collide-with) (collide-spec))
+      (set-vector! (-> prim local-sphere) 0.0 0.0 0.0 (meters 1.0))
+      (set! (-> root total-prims) (the-as uint 1))
+      (set! (-> root root-prim) prim)
+      )
+
+    (set! (-> root nav-radius) (meters 1.0))
+    (set! (-> root max-iteration-count) (the-as uint 1))
+    (set! (-> this root) root)
+    )
+  (none)
+  )
+
+(defbehavior jak2logo-init-by-other jak2logo ((vec vector))
+  (stack-size-set! (-> self main-thread) 512)
+  (jak2logo-make-root self)
+
+  (set! (-> self gen-i) 0)
+  (set! (-> self press-start-on?) #f)
+  (set! (-> self hero-text-on?) #f)
+
+  (set! (-> self root trans quad) (-> vec quad))
+  (quaternion-identity! (-> self root quat))
+  (set-vector! (-> self root scale) 1.0 1.0 1.0 1.0)
+  (vector-zero! (-> self root transv))
+
+  (initialize-skeleton
+    self
+    (the-as skeleton-group
+      (art-group-get-by-name *level* "skel-jak2-logo" (the-as (pointer uint32) #f)))
+    (the-as pair 0)
+    )
+
+  (set! (-> self draw color-mult r) 1.0)
+  (set! (-> self draw color-mult g) 1.0)
+  (set! (-> self draw color-mult b) 1.0)
+  (set! (-> self draw color-mult a) 1.0)
+
+  (go-virtual idle)
+  (none)
+  )
+
+(defstate idle (jak2logo)
+  :virtual #t
+  :code (behavior ()
+    (loop
+      (+! (-> self gen-i) 1)
+
+      (when (and (>= (-> self gen-i) 120) (< (-> self gen-i) 132))
+        (set! (-> self draw color-mult r) 1.0)
+        (set! (-> self draw color-mult g) 1.0)
+        (set! (-> self draw color-mult b) 1.0)
+        )
+
+      (when (and (>= (-> self gen-i) 132) (< (-> self gen-i) 138))
+        (set! (-> self draw color-mult r) 0.0)
+        (set! (-> self draw color-mult g) 0.0)
+        (set! (-> self draw color-mult b) 0.0)
+        )
+
+      (when (>= (-> self gen-i) 138)
+        (set! (-> self draw color-mult r) 1.0)
+        (set! (-> self draw color-mult g) 1.0)
+        (set! (-> self draw color-mult b) 1.0)
+        )
+
+      (when (>= (-> self gen-i) 198)
+        (set! (-> self hero-text-on?) #t)
+        )
+
+      (when (= (-> self hero-text-on?) #t)
+        (draw-mod-menu-text-custom "<COLOR_CYAN>Hero<COLOR_ORANGE>Mode<COLOR_RED>+"
+          255 40 0.6 #f #t #f)
+        (draw-mod-menu-text-custom "<COLOR_CYAN>By Kraken"
+          295 65 0.285 #f #t #f)
+
+        (when (= (mod (-> self gen-i) 60) 0)
+          (set! (-> self press-start-on?) (not (-> self press-start-on?)))
+          )
+
+        (when (= (-> self press-start-on?) #t)
+          (draw-mod-menu-text-custom "<COLOR_WHITE>Press Start"
+            255 335 0.825 #f #t #f)
+          )
+
+        (when
+          (or
+            (cpad-pressed? 0 x)
+            (cpad-pressed? 0 start)
+            )
+          (go-virtual entering)
+          )
+        )
+
+      (suspend)
+      )
+    )
+  )
+
+(defstate entering (jak2logo)
+  :virtual #t
+  :code (behavior ()
+    (set! in-mmenu? #f)
+    (activate-progress *dproc* 'title)
+    (set! *jak2logo* #f)
+    (deactivate self)
+    )
+  )
+
+(defun spawn-jak2-logo ()
+  (set! *jak2logo*
+    (process-spawn jak2logo
+      (new 'static 'vector :x (meters 191.9733) :y (meters -10.1276) :z (meters 1037.3940) :w 1.0)
+      :name "jak2logo"
+      *active-pool*
+    )
+  )
+  (none)
+)
+
+(defun launch-pre-mmenu ()
+  (initialize! *game-info* 'game (the-as game-save #f) "tomb-start")
+  (set! global-geni 0)
+  (set! *jak2logo* #f)
+  (set! in-mmenu? #t)
+  (none)
+  )
+
+(defun runs-every-frame ()
+  (when
+    (and
+      (= in-mmenu? #t)
+      *target*
+      (not *scene-player*)
+      (= (paused?) #f)
+      (= (pause-allowed?) #t)
+      )
+    (let ((camera-loc (new 'static 'vector
+            :x (meters 191.9657)
+            :y (meters -37.5000)
+            :z (meters 1088.9949)
+            :w 1.0
+            ))
+      (tpos (new 'static 'vector
+            :x (meters 191.9753)
+            :y (meters -75.0000)
+            :z (meters 1088.7451)
+            :w 1.0
+            ))
+      )
+  (+! global-geni 1)
+
+  (cond
+  ((= global-geni 1)
+    (set-vector! tpos
+      (meters 191.9733)
+      (meters -75.0000)
+      (meters 1037.3940)
+      1.0
+      )
+    )
+
+  ((< global-geni 240)
+    (set-vector! tpos
+      (meters 191.9733)
+      (meters -75.0000)
+      (meters 1037.3940)
+      1.0
+      )
+    )
+
+  ((< global-geni 360)
+    (set-vector! tpos
+      (meters 191.9733)
+      (+ (-> *target* root trans y) (meters 0.5406))
+      (meters 1037.3940)
+      1.0
+      )
+
+    (when (> (-> tpos y) (meters -10.1276))
+      (set! (-> tpos y) (meters -10.1276))
+      )
+    )
+
+  (else
+    (set-vector! tpos
+      (meters 191.9733)
+      (meters -10.1276)
+      (meters 1037.3940)
+      1.0
+      )
+    )
+  )
+
+  (turn-to-scene-camera camera-loc tpos)
+
+  (when
+    (and
+      (>= global-geni 60)
+      (< global-geni 240)
+      )
+    (draw-mod-menu-text-custom "<COLOR_WHITE>Made By Kraken"
+      255 180 0.55 #f #t #f)
+    )
+
+  (when
+    (and
+      (>= global-geni 300)
+      (not *jak2logo*)
+      )
+    (spawn-jak2-logo)
+    )
+  )
+    )
 (when (= mm-hint-1 #t)
     (+! mm-hint-1i 1)
     (when (not *scene-player*)
@@ -1300,8 +1884,6 @@ FINISHED :D
     (set! target-explode #t)
   )
 )
-
-
 
 
 
@@ -2907,6 +3489,9 @@ FINISHED :D
 ;(the int (-> *setting-control* user-current sfx-volume))
 (when (= bj-lose #t) ;you suck
   (+! lose-count 1)
+  (when (= lose-count 1)
+  (bj-debug-state! "GAME END - PLAYER LOSS")
+  )
   (set! in-hiphog? #f)
   (set! dcard2 #t)
   (bj-spawn-dealer-card-world 2 dcard2-eco dcard2i)
@@ -3214,8 +3799,18 @@ FINISHED :D
   )
 )
 
+(when
+  (and
+    (= on-table? #t)
+    (= in-blackjack? #t)
+    (= round-started? #t)
+    )
+  (bj-check-jakpot-win!)
+  )
+
 (when (= bj-win #t) ;you still stuck cuz its mostly all luck
   (+! win-count 1)
+  (bj-check-jakpot-win!)
   (when (= win-count 1)
     (play-sound-file "snd/win.mp3" (the int (* (-> *setting-control* user-current sfx-volume) 100)))
     (set! in-hiphog? #f)
@@ -3223,11 +3818,13 @@ FINISHED :D
     (bj-spawn-dealer-card-world 2 dcard2-eco dcard2i)
     (set! jcard3 #t)
     (set! jcard4 #t)
+    (bj-debug-state! "GAME END - PLAYER WIN")
   )
   (when (and (= jackpot-win #t) (= win-count 2))
     (+! (-> *game-info* gem) (*! bid-current 10))
     (set! (-> *game-info* total-trys) 1)
     (set! jackpotbaby #t)
+    (play-sound-file "snd/casino-win.wav" (the int (* (-> *setting-control* user-current sfx-volume) 100)))
   )
   (when (and (= jackpot-win #f)(= win-count 2))
     (+! (-> *game-info* gem) bid-current)
@@ -3453,7 +4050,8 @@ FINISHED :D
     (bj-spawn-dealer-card-world 2 dcard2-eco dcard2i)
     (set! dealer-turn-stage 1)
     (set! dealer-turn-timer 0)
-    )
+    (bj-debug-state! "DEALER REVEAL")
+  )
 
   (when
     (and
@@ -3495,20 +4093,22 @@ FINISHED :D
 
       ((< dturn 4)
         (set! dealer-current-card (rand-vu-int-range 1 10))
-        (set! added-cards-dealer (+! added-cards-dealer dealer-current-card))
         (+! dturn 1)
+        (bj-apply-dealer-card! dturn dealer-current-card)
 
         (when (= dturn 3)
-          (set! dcard3i dealer-current-card)
+          (set! dealer-current-card dcard3i)
           (set! dcard3 #t)
           (bj-spawn-dealer-card-world 3 dcard3-eco dcard3i)
           )
 
         (when (= dturn 4)
-          (set! dcard4i dealer-current-card)
+          (set! dealer-current-card dcard4i)
           (set! dcard4 #t)
           (bj-spawn-dealer-card-world 4 dcard4-eco dcard4i)
           )
+        (bj-debug-state! "DEALER HIT")
+        (spawn-bj-card-add-number dealer-current-card 1)
         )
 
       (else
@@ -3543,25 +4143,24 @@ FINISHED :D
   (when (and (= hitting? #t)(= in-hiphog? #t))   ;activates once when an option is selected from the three above
     (when (= bj-hit #t)                                                   ;upon jak hit
       (set! jak-current-card (rand-vu-int-range 1 10))
-      (set! added-cards-jak (+! added-cards-jak jak-current-card))
       (+! jturn 1)
+      (bj-apply-jak-card! jturn jak-current-card)
+      (spawn-bj-card-add-number jak-current-card 0)
       (when (= jturn 3)
+        (bj-force-jakpot-eco!)
+        (set! jak-current-card jcard3i)
         (set! jcard3i jak-current-card)
         (set! jcard3 #t)
         (bj-spawn-player-card-world 3 jcard3-eco jcard3i)
-        )
+      )
 
       (when (= jturn 4)
-        (set! jcard4i jak-current-card)
+        (bj-force-jakpot-eco!)
+        (set! jak-current-card jcard4i)
         (set! jcard4 #t)
         (bj-spawn-player-card-world 4 jcard4-eco jcard4i)
-        (when (= jackpot-win #t)
-          (set! jcard1s "<COLOR_PINK>~d")
-          (set! jcard2s "<COLOR_PINK>~d")
-          (set! jcard3s "<COLOR_PINK>~d")
-          (set! jcard4s "<COLOR_PINK>~d")
-          )
-        )
+        (bj-check-jakpot-win!)
+      )
       (let ((cnumb 0))
         (set! cnumb (rand-vu-int-range 1 3))
         (when (= cnumb 1)
@@ -3583,15 +4182,19 @@ FINISHED :D
       (when (<= added-cards-jak 21)
         (format #t "~%Hit! Recieved a ~d" jak-current-card)
       )
+      (bj-debug-state! "PLAYER HIT")
       (set! hitting? #f)
       (set! bj-hit #f)
     )
     (when (= bj-stay #t)
-      (when (= dealer-turn-active? #f)
-        (set! dealer-turn-active? #t)
-        (set! dealer-turn-stage 0)
-        (set! dealer-turn-timer 0)
-      )
+      (when (= bj-stay #t)
+        (when (= dealer-turn-active? #f)
+          (set! dealer-turn-active? #t)
+          (set! dealer-turn-stage 0)
+          (set! dealer-turn-timer 0)
+          (bj-debug-state! "PLAYER STAY")
+          )
+        )
     )
     (when (= bj-double-down #t)
       (*! bid-current 2)
@@ -3604,6 +4207,7 @@ FINISHED :D
       (print "Double Down.")
     )
     (when (= dealer-stay #t)
+    (bj-debug-state! "DEALER STAY")
     (when (and (= dcard3 #f)(= dturn 3))
         (set! dcard3i dealer-current-card)
         (set! dcard3 #t)
@@ -3636,7 +4240,6 @@ FINISHED :D
       )
     )
   )
-
   ;----------------TABLE ACTIVATED----------------------------------------- ;Refreshes the menu screen on-table, draws the menu screen using attributes listed above (this'll be big)
   (when (= table-activate #t)
     (when (and (= in-blackjack? #f)(= in-pre-game? #t))
@@ -3705,6 +4308,170 @@ FINISHED :D
       )
     )
 
+(when (= colorcard #t)
+  (let ((c 0))
+    (set! c (rand-vu-int-range 1 4))
+    (when (= c 1)
+      (set! jcard1s "<COLOR_RED>~d")
+      (set! jcard1-eco 3)
+      )
+    (when (= c 2)
+      (set! jcard1s "<COLOR_BLUE>~d")
+      (set! jcard1-eco 1)
+      )
+    (when (= c 3)
+      (set! jcard1s "<COLOR_GREEN>~d")
+      (set! jcard1-eco 0)
+      )
+    (when (= c 4)
+      (set! jcard1s "<COLOR_YELLOW>~d")
+      (set! jcard1-eco 2)
+      )
+
+    (let ((c1 0))
+      (set! c1 (rand-vu-int-range 1 4))
+      (when (= c1 1)
+        (set! jcard2s "<COLOR_RED>~d")
+        (set! jcard2-eco 3)
+        )
+      (when (= c1 2)
+        (set! jcard2s "<COLOR_BLUE>~d")
+        (set! jcard2-eco 1)
+        )
+      (when (= c1 3)
+        (set! jcard2s "<COLOR_GREEN>~d")
+        (set! jcard2-eco 0)
+        )
+      (when (= c1 4)
+        (set! jcard2s "<COLOR_YELLOW>~d")
+        (set! jcard2-eco 2)
+        )
+
+      (let ((c2 0))
+        (set! c2 (rand-vu-int-range 1 4))
+        (when (= c2 1)
+          (set! jcard3s "<COLOR_RED>~d")
+          (set! jcard3-eco 3)
+          )
+        (when (= c2 2)
+          (set! jcard3s "<COLOR_BLUE>~d")
+          (set! jcard3-eco 1)
+          )
+        (when (= c2 3)
+          (set! jcard3s "<COLOR_GREEN>~d")
+          (set! jcard3-eco 0)
+          )
+        (when (= c2 4)
+          (set! jcard3s "<COLOR_YELLOW>~d")
+          (set! jcard3-eco 2)
+          )
+
+        (let ((c3 0))
+          (set! c3 (rand-vu-int-range 1 4))
+          (when (= c3 1)
+            (set! jcard4s "<COLOR_RED>~d")
+            (set! jcard4-eco 3)
+            )
+          (when (= c3 2)
+            (set! jcard4s "<COLOR_BLUE>~d")
+            (set! jcard4-eco 1)
+            )
+          (when (= c3 3)
+            (set! jcard4s "<COLOR_GREEN>~d")
+            (set! jcard4-eco 0)
+            )
+          (when (= c3 4)
+            (set! jcard4s "<COLOR_YELLOW>~d")
+            (set! jcard4-eco 2)
+            )
+
+          (let ((c4 0))
+            (set! c4 (rand-vu-int-range 1 4))
+            (when (= c4 1)
+              (set! dcard1s "<COLOR_RED>~d")
+              (set! dcard1-eco 3)
+              )
+            (when (= c4 2)
+              (set! dcard1s "<COLOR_BLUE>~d")
+              (set! dcard1-eco 1)
+              )
+            (when (= c4 3)
+              (set! dcard1s "<COLOR_GREEN>~d")
+              (set! dcard1-eco 0)
+              )
+            (when (= c4 4)
+              (set! dcard1s "<COLOR_YELLOW>~d")
+              (set! dcard1-eco 2)
+              )
+
+            (let ((c5 0))
+              (set! c5 (rand-vu-int-range 1 4))
+              (when (= c5 1)
+                (set! dcard2s "<COLOR_RED>~d")
+                (set! dcard2-eco 3)
+                )
+              (when (= c5 2)
+                (set! dcard2s "<COLOR_BLUE>~d")
+                (set! dcard2-eco 1)
+                )
+              (when (= c5 3)
+                (set! dcard2s "<COLOR_GREEN>~d")
+                (set! dcard2-eco 0)
+                )
+              (when (= c5 4)
+                (set! dcard2s "<COLOR_YELLOW>~d")
+                (set! dcard2-eco 2)
+                )
+
+              (let ((c6 0))
+                (set! c6 (rand-vu-int-range 1 4))
+                (when (= c6 1)
+                  (set! dcard3s "<COLOR_RED>~d")
+                  (set! dcard3-eco 3)
+                  )
+                (when (= c6 2)
+                  (set! dcard3s "<COLOR_BLUE>~d")
+                  (set! dcard3-eco 1)
+                  )
+                (when (= c6 3)
+                  (set! dcard3s "<COLOR_GREEN>~d")
+                  (set! dcard3-eco 0)
+                  )
+                (when (= c6 4)
+                  (set! dcard3s "<COLOR_YELLOW>~d")
+                  (set! dcard3-eco 2)
+                  )
+
+                (let ((c7 0))
+                  (set! c7 (rand-vu-int-range 1 4))
+                  (when (= c7 1)
+                    (set! dcard4s "<COLOR_RED>~d")
+                    (set! dcard4-eco 3)
+                    )
+                  (when (= c7 2)
+                    (set! dcard4s "<COLOR_BLUE>~d")
+                    (set! dcard4-eco 1)
+                    )
+                  (when (= c7 3)
+                    (set! dcard4s "<COLOR_GREEN>~d")
+                    (set! dcard4-eco 0)
+                    )
+                  (when (= c7 4)
+                    (set! dcard4s "<COLOR_YELLOW>~d")
+                    (set! dcard4-eco 2)
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+
+  (set! colorcard #f)
+  )
+
     (when (and (= in-pre-game? #t) (= in-blackjack? #t))
 
     (print "IN BLACKJACK - CONTROLS:
@@ -3712,38 +4479,39 @@ FINISHED :D
 <PAD_SQUARE> - Hit
 <COLOR_ORANGE>R1<COLOR_WHITE> - Double Down")
 
-    (when (= round-started? #f)
+    (when
+      (and
+        (= round-started? #f)
+        (= colorcard #f)
+      )
       (print "Started Round!")
       (set! jak-current-card (rand-vu-int-range 1 10))
-      (when (= jak-current-card 1)
-        (set! jak-current-card 11)
-      )
       (+! jturn 1)
-      (set! jcard1i jak-current-card)
+      (bj-apply-jak-card! 1 jak-current-card)
+      (bj-force-jakpot-eco!)
+      (set! jak-current-card jcard1i)
       (set! jcard1 #t)
       (bj-spawn-player-card-world 1 jcard1-eco jcard1i)
-      (set! added-cards-jak (+! added-cards-jak jak-current-card))
 
       (set! jak-current-card (rand-vu-int-range 1 10))
       (+! jturn 1)
-      (set! jcard2i jak-current-card)
+      (bj-apply-jak-card! 2 jak-current-card)
+      (bj-force-jakpot-eco!)
+      (set! jak-current-card jcard2i)
       (set! jcard2 #t)
       (bj-spawn-player-card-world 2 jcard2-eco jcard2i)
-      (set! added-cards-jak (+! added-cards-jak jak-current-card))
-      (set! dealer-current-card (rand-vu-int-range 1 10))
-      (when (= dealer-current-card 1)
-        (set! dealer-current-card 11)
-      )
-      (+! dturn 1)
-      (set! dcard1i dealer-current-card)
-      (set! dcard1 #t)
-      (bj-spawn-dealer-card-world 1 dcard1-eco dcard1i)
-      (set! added-cards-dealer (+! added-cards-dealer dealer-current-card))
 
       (set! dealer-current-card (rand-vu-int-range 1 10))
       (+! dturn 1)
-      (set! dcard2i dealer-current-card)
-      (set! added-cards-dealer (+! added-cards-dealer dealer-current-card))
+      (bj-apply-dealer-card! 1 dealer-current-card)
+      (set! dealer-current-card dcard1i)
+      (set! dcard1 #t)
+      (bj-spawn-dealer-card-world 1 dcard1-eco dcard1i)
+
+      (set! dealer-current-card (rand-vu-int-range 1 10))
+      (+! dturn 1)
+      (bj-apply-dealer-card! 2 dealer-current-card)
+      (set! dealer-current-card dcard2i)
       (format #t "~%Dealer Card Amount: ~d" added-cards-dealer)
       (format #t "~%Jak Card Amount: ~d" added-cards-jak)
       (set! round-started? #t)
@@ -4004,173 +4772,28 @@ Eco War is similar to BlackJack, but with a twist!
 
                                                                                                                                         ;SET COLOR OF CARDS
 
-(when (= colorcard #t)
-  (let ((c 0))
-    (set! c (rand-vu-int-range 1 4))
+
+(when (= jackpotbaby #t)
+  (+! jackpotbabytime 1)
+  (let ((c (rand-vu-int-range 1 5)))
     (when (= c 1)
-      (set! jcard1s "<COLOR_RED>~d")
-      (set! jcard1-eco 3)
-      )
-    (when (= c 2)
-      (set! jcard1s "<COLOR_BLUE>~d")
-      (set! jcard1-eco 1)
-      )
-    (when (= c 3)
-      (set! jcard1s "<COLOR_GREEN>~d")
-      (set! jcard1-eco 0)
-      )
-    (when (= c 4)
-      (set! jcard1s "<COLOR_YELLOW>~d")
-      (set! jcard1-eco 2)
-      )
-
-    (let ((c1 0))
-      (set! c1 (rand-vu-int-range 1 4))
-      (when (= c1 1)
-        (set! jcard2s "<COLOR_RED>~d")
-        (set! jcard2-eco 3)
-        )
-      (when (= c1 2)
-        (set! jcard2s "<COLOR_BLUE>~d")
-        (set! jcard2-eco 1)
-        )
-      (when (= c1 3)
-        (set! jcard2s "<COLOR_GREEN>~d")
-        (set! jcard2-eco 0)
-        )
-      (when (= c1 4)
-        (set! jcard2s "<COLOR_YELLOW>~d")
-        (set! jcard2-eco 2)
-        )
-
-      (let ((c2 0))
-        (set! c2 (rand-vu-int-range 1 4))
-        (when (= c2 1)
-          (set! jcard3s "<COLOR_RED>~d")
-          (set! jcard3-eco 3)
-          )
-        (when (= c2 2)
-          (set! jcard3s "<COLOR_BLUE>~d")
-          (set! jcard3-eco 1)
-          )
-        (when (= c2 3)
-          (set! jcard3s "<COLOR_GREEN>~d")
-          (set! jcard3-eco 0)
-          )
-        (when (= c2 4)
-          (set! jcard3s "<COLOR_YELLOW>~d")
-          (set! jcard3-eco 2)
-          )
-
-        (let ((c3 0))
-          (set! c3 (rand-vu-int-range 1 4))
-          (when (= c3 1)
-            (set! jcard4s "<COLOR_RED>~d")
-            (set! jcard4-eco 3)
-            )
-          (when (= c3 2)
-            (set! jcard4s "<COLOR_BLUE>~d")
-            (set! jcard4-eco 1)
-            )
-          (when (= c3 3)
-            (set! jcard4s "<COLOR_GREEN>~d")
-            (set! jcard4-eco 0)
-            )
-          (when (= c3 4)
-            (set! jcard4s "<COLOR_YELLOW>~d")
-            (set! jcard4-eco 2)
-            )
-
-          (when (and (= c c1) (= c1 c2) (= c2 c3) (= c3 c))
-            (set! jackpot-win #t)
-            )
-
-          (let ((c4 0))
-            (set! c4 (rand-vu-int-range 1 4))
-            (when (= c4 1)
-              (set! dcard1s "<COLOR_RED>~d")
-              (set! dcard1-eco 3)
-              )
-            (when (= c4 2)
-              (set! dcard1s "<COLOR_BLUE>~d")
-              (set! dcard1-eco 1)
-              )
-            (when (= c4 3)
-              (set! dcard1s "<COLOR_GREEN>~d")
-              (set! dcard1-eco 0)
-              )
-            (when (= c4 4)
-              (set! dcard1s "<COLOR_YELLOW>~d")
-              (set! dcard1-eco 2)
-              )
-
-            (let ((c5 0))
-              (set! c5 (rand-vu-int-range 1 4))
-              (when (= c5 1)
-                (set! dcard2s "<COLOR_RED>~d")
-                (set! dcard2-eco 3)
-                )
-              (when (= c5 2)
-                (set! dcard2s "<COLOR_BLUE>~d")
-                (set! dcard2-eco 1)
-                )
-              (when (= c5 3)
-                (set! dcard2s "<COLOR_GREEN>~d")
-                (set! dcard2-eco 0)
-                )
-              (when (= c5 4)
-                (set! dcard2s "<COLOR_YELLOW>~d")
-                (set! dcard2-eco 2)
-                )
-
-              (let ((c6 0))
-                (set! c6 (rand-vu-int-range 1 4))
-                (when (= c6 1)
-                  (set! dcard3s "<COLOR_RED>~d")
-                  (set! dcard3-eco 3)
-                  )
-                (when (= c6 2)
-                  (set! dcard3s "<COLOR_BLUE>~d")
-                  (set! dcard3-eco 1)
-                  )
-                (when (= c6 3)
-                  (set! dcard3s "<COLOR_GREEN>~d")
-                  (set! dcard3-eco 0)
-                  )
-                (when (= c6 4)
-                  (set! dcard3s "<COLOR_YELLOW>~d")
-                  (set! dcard3-eco 2)
-                  )
-
-                (let ((c7 0))
-                  (set! c7 (rand-vu-int-range 1 4))
-                  (when (= c7 1)
-                    (set! dcard4s "<COLOR_RED>~d")
-                    (set! dcard4-eco 3)
-                    )
-                  (when (= c7 2)
-                    (set! dcard4s "<COLOR_BLUE>~d")
-                    (set! dcard4-eco 1)
-                    )
-                  (when (= c7 3)
-                    (set! dcard4s "<COLOR_GREEN>~d")
-                    (set! dcard4-eco 0)
-                    )
-                  (when (= c7 4)
-                    (set! dcard4s "<COLOR_YELLOW>~d")
-                    (set! dcard4-eco 2)
-                    )
-                  )
-                )
-              )
-            )
-          )
-        )
-      )
+      (set! jackpotcolors "<COLOR_RED>~s")
     )
-
-  (set! colorcard #f)
+    (when (= c 2)
+      (set! jackpotcolors "<COLOR_BLUE>~s")
+    )
+    (when (= c 3)
+      (set! jackpotcolors "<COLOR_GREEN>~s")
+    )
+    (when (= c 4)
+      (set! jackpotcolors "<COLOR_YELLOW>~s")
+    )
+    (when (= c 5)
+      (set! jackpotcolors "<COLOR_WHITE>~s")
+    )
+    (set! jackpot-string "< JAKPOT! <")
   )
+)
 
 ;DRAW CARDS
 #|
@@ -4295,28 +4918,6 @@ Eco War is similar to BlackJack, but with a twist!
       (let ((font-ctx (new 'stack 'font-context *font-default-matrix* 200 60 0.0 (font-color default) (font-flags shadow kerning large))))
         (set! (-> font-ctx scale) 0.325)
         (draw-string-adv *pc-encoded-matt-str* buf font-ctx)))
-  )
-
-
-(when (= jackpotbaby #t)
-  (+! jackpotbabytime 1)
-  (let ((c (rand-vu-int-range 1 5)))
-    (when (= c 1)
-      (set! jackpotcolors "<COLOR_RED>~s")
-    )
-    (when (= c 2)
-      (set! jackpotcolors "<COLOR_BLUE>~s")
-    )
-    (when (= c 3)
-      (set! jackpotcolors "<COLOR_GREEN>~s")
-    )
-    (when (= c 4)
-      (set! jackpotcolors "<COLOR_YELLOW>~s")
-    )
-    (when (= c 5)
-      (set! jackpotcolors "<COLOR_WHITE>~s")
-    )
-    (set! jackpot-string "< JAKPOT! <")
   )
 
   (clear matt-str)

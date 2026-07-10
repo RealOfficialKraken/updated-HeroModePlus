@@ -11,6 +11,7 @@
 (define-extern intro-play (function none))
 (define-extern find-nearest-entity (function vector type entity))
 (define-extern warp-gate type)
+(defun-extern launch-pre-mmenu none)
 
 ;; DECOMP BEGINS
 
@@ -317,10 +318,12 @@
          )
        )
       ((logtest? (-> arg0 flags) (continue-flags title))
-       (go target-title #t)
+       ;(go target-title #t)
+       (launch-pre-mmenu)
        )
       ((logtest? (-> arg0 flags) (continue-flags title-movie))
-       (go target-title #f)
+       ;(go target-title #f)
+       (launch-pre-mmenu)
        )
       ((logtest? (-> arg0 flags) (continue-flags demo))
        (go target-demo #t)

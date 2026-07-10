@@ -4,8 +4,10 @@
 
 (deftype eco-war-card (process-drawable)
   ((eco-type       int)
+   (display-eco    int)
    (number         int)
-   (trans-2d       vector4w  :inline)
+   (card-slot      int)
+   (trans-2d       vector4w :inline)
    (on-screen?     symbol)
    (font           font-context)
    )
@@ -75,6 +77,86 @@
   (-> self font)
   )
 
+(defun eco-war-card-find-slot ((vec vector))
+  (let ((x (-> vec x)))
+    (cond
+      ((and (> x (meters -80.6000)) (< x (meters -80.2988)))
+        1
+        )
+      ((and (>= x (meters -80.2988)) (< x (meters -80.0036)))
+        2
+        )
+      ((and (>= x (meters -80.0036)) (< x (meters -79.7084)))
+        3
+        )
+      ((and (>= x (meters -79.7084)) (< x (meters -79.4000)))
+        4
+        )
+      ((and (> x (meters -82.8500)) (< x (meters -82.5527)))
+        5
+        )
+      ((and (>= x (meters -82.5527)) (< x (meters -82.2575)))
+        6
+        )
+      ((and (>= x (meters -82.2575)) (< x (meters -81.9623)))
+        7
+        )
+      ((and (>= x (meters -81.9623)) (< x (meters -81.6500)))
+        8
+        )
+      (else
+        0
+        )
+      )
+    )
+  )
+
+(defun eco-war-card-global-number ((slot int))
+  (cond
+    ((= slot 1)
+      jcard1i
+      )
+    ((= slot 2)
+      jcard2i
+      )
+    ((= slot 3)
+      jcard3i
+      )
+    ((= slot 4)
+      jcard4i
+      )
+    ((= slot 5)
+      dcard1i
+      )
+    ((= slot 6)
+      dcard2i
+      )
+    ((= slot 7)
+      dcard3i
+      )
+    ((= slot 8)
+      dcard4i
+      )
+    (else
+      0
+      )
+    )
+  )
+
+(defun eco-war-card-sync-number! ((obj eco-war-card))
+  (when (!= (-> obj card-slot) 0)
+    (let ((new-num (eco-war-card-global-number (-> obj card-slot))))
+      (when
+        (and
+          (!= new-num 0)
+          (!= (-> obj number) new-num)
+          )
+        (set! (-> obj number) new-num)
+        )
+      )
+    )
+  (none)
+  )
 
 (defbehavior eco-war-card-init-by-other eco-war-card ((vec vector) (eco int) (num int))
   (let ((root-shape (new 'process 'collide-shape-moving self (collide-list-enum hit-by-player))))
@@ -98,10 +180,26 @@
   (update-transforms root-shape)
   )
   (set! (-> self eco-type) eco)
-  (set! (-> self number) num)
-  (set! (-> self on-screen?) #f)
-  (initialize-font self)
-  (set! (-> self part) (create-launch-control (eco-war-card-partgroup eco) self))
+(set! (-> self display-eco) eco)
+(set! (-> self number) num)
+(set! (-> self card-slot) (eco-war-card-find-slot vec))
+(set! (-> self on-screen?) #f)
+
+(format #t
+  "~%[ECO CARD] slot=~D eco=~D number=~D"
+  (-> self card-slot)
+  eco
+  num
+  )
+
+(initialize-font self)
+
+(set! (-> self part)
+  (create-launch-control
+    (eco-war-card-partgroup eco)
+    self
+    )
+  )
   (process-mask-clear! (-> self mask) pause)
   (go-virtual idle)
   )
@@ -131,19 +229,26 @@
 
   :code (behavior ()
   (loop
+    (eco-war-card-sync-number! self)
     (eco-war-card-post! self)
     (suspend)
     )
   )
 
-    :post (behavior ()
+  :post (behavior ()
     (when
-        (and
+      (and
         (-> self on-screen?)
         (nonzero? (-> self font))
         )
-        (print-game-text (string-format "~D" (-> self number)) (-> self font) #f 44 (bucket-id debug-no-zbuf1))
+      (print-game-text
+        (string-format "~D" (-> self number))
+        (-> self font)
+        #f
+        44
+        (bucket-id debug-no-zbuf1)
         )
+      )
     )
   )
 
@@ -162,4 +267,126 @@
       )
     (deactivate self)
     )
+  )
+
+  (deftype bj-card-add-number (process)
+  ((value     int)
+   (dealer?   int)
+   (x         int)
+   (y         int)
+   (y-ofs     float)
+   (timer     int)
+   (font      font-context)
+   )
+  (:state-methods
+    active
+    )
+  (:methods
+    (initialize-font (_type_) font-context)
+    )
+  )
+
+(defmethod initialize-font ((self bj-card-add-number))
+  (when (zero? (-> self font))
+    (set! (-> self font)
+      (new 'process 'font-context *font-default-matrix* 0 0 0.0 (font-color yellow) (font-flags shadow kerning large middle))
+      )
+    )
+  (set-scale! (-> self font) 0.45)
+  (set-flags! (-> self font) (font-flags shadow kerning large middle))
+  (set-width! (-> self font) 80)
+  (set-height! (-> self font) 30)
+  (-> self font)
+  )
+
+(defbehavior bj-card-add-number-init-by-other bj-card-add-number ((value int) (dealer? int))
+  (set! (-> self value) value)
+  (set! (-> self dealer?) dealer?)
+  (set! (-> self timer) 0)
+  (set! (-> self y-ofs) 0.0)
+
+  (cond
+    ((= dealer? 1)
+      (set! (-> self x) 446)
+      (set! (-> self y) 111)
+      )
+    (else
+      (set! (-> self x) 446)
+      (set! (-> self y) 163)
+      )
+    )
+
+  (initialize-font self)
+  (set! (-> self font alpha) 1.0)
+  (process-mask-clear! (-> self mask) pause)
+  (go-virtual active)
+  )
+
+(defun spawn-bj-card-add-number ((value int) (dealer? int))
+  (process-spawn bj-card-add-number value dealer? :name "bj-card-add-number" *active-pool*)
+  (none)
+  )
+
+(defstate active (bj-card-add-number)
+  :virtual #t
+
+  :code (behavior ()
+    (let ((state-time (current-time)))
+      (until (>= (- (current-time) state-time) (fsec 0.5))
+        (cond
+          ((= (-> self dealer?) 1)
+            (-! (-> self y-ofs) (* 1.15 (-> self clock time-adjust-ratio)))
+            )
+          (else
+            (+! (-> self y-ofs) (* 1.15 (-> self clock time-adjust-ratio)))
+            )
+          )
+        (set! (-> self font alpha) 1.0)
+        (suspend)
+        )
+
+      (set! state-time (current-time))
+
+      (until (>= (- (current-time) state-time) (fsec 0.5))
+        (cond
+          ((= (-> self dealer?) 1)
+            (-! (-> self y-ofs) (* 1.15 (-> self clock time-adjust-ratio)))
+            )
+          (else
+            (+! (-> self y-ofs) (* 1.15 (-> self clock time-adjust-ratio)))
+            )
+          )
+
+        (set! (-> self font alpha)
+          (lerp-scale 1.0 0.0 (the float (- (current-time) state-time)) 0.0 (fsec 0.5))
+          )
+        (suspend)
+        )
+      )
+
+    (deactivate self)
+    )
+
+  :post (behavior ()
+    (when (nonzero? (-> self font))
+      (set-origin! (-> self font) (-> self x) (-> self y))
+      (+! (-> self font origin y) (-> self y-ofs))
+      (-! (-> self font origin x) (/ (-> self font width) 2))
+
+      (print-game-text
+        (string-format "+~D" (-> self value))
+        (-> self font)
+        #f
+        44
+        (bucket-id debug-no-zbuf1)
+        )
+      )
+    )
+  )
+
+(defmethod relocate ((this bj-card-add-number) (diff int))
+  (when (nonzero? (-> this font))
+    (&+! (-> this font) diff)
+    )
+  (call-parent-method this diff)
   )
