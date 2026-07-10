@@ -814,6 +814,7 @@ FINISHED :D
 (defstate entering (jak2logo)
   :virtual #t
   :code (behavior ()
+    (set! pause-menu-blocked? #f)
     (set! in-mmenu? #f)
     (activate-progress *dproc* 'title)
     (set! *jak2logo* #f)
@@ -837,6 +838,7 @@ FINISHED :D
   (set! global-geni 0)
   (set! *jak2logo* #f)
   (set! in-mmenu? #t)
+  (set! pause-menu-blocked? #t)
   (none)
   )
 

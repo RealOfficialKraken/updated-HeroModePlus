@@ -55,10 +55,14 @@
   )
 
 (defun eco-war-card-post! ((obj eco-war-card))
-  (when (nonzero? (-> obj part))
+  (when
+    (and
+      (nonzero? (-> obj part))
+      (nonzero? (-> obj root))
+      )
     (spawn
       (-> obj part)
-      (the-as vector (-> (the-as collide-shape (-> obj root)) root-prim prim-core))
+      (-> obj root trans)
       )
     )
   (none)
